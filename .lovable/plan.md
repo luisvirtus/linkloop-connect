@@ -25,6 +25,10 @@ comprou -> entra no site -> login Google -> escaneia/digita o código
 
 **Bloqueio:** o cliente bloqueia/desbloqueia sozinho, inclusive com assinatura vencida. Plaquinha bloqueada mostra página neutra "indisponível no momento".
 
+**Venda:** a venda é registrada quando a plaquinha é lida e vinculada a uma empresa. O admin (ou o vendedor) pode pré-atribuir plaquinhas a um vendedor antes disso; ao vincular, a venda nasce já com o vendedor correto e gera a comissão de venda.
+
+**Anuidade:** a primeira assinatura anual vence 12 meses após a data do vínculo. Antes disso não há cobrança de anuidade.
+
 **Renovação e comissão:** a renovação identifica o vendedor da venda original e gera comissão automática com o percentual de renovação.
 
 ## 3. Modelo de dados
