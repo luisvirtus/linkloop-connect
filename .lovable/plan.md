@@ -40,11 +40,11 @@ comprou -> entra no site -> login Google -> escaneia/digita o código
 | `sellers` | vendedor, dados de contato, status |
 | `companies` | empresa do cliente: nome, logo, site, dono |
 | `batches` | lotes de produção: quantidade, tamanho, data, custo unitário |
-| `plates` | número sequencial, código do QR (único), tamanho, status, lote, empresa, vendedor, datas, custo, observações |
+| `plates` | número sequencial, código do QR (único), tamanho, status, lote, empresa, vendedor pré-atribuído, datas (geração e vínculo), custo, observações |
 | `pages` | página pública ligada à plaquinha: título, logo, tema, bloqueada sim/não |
 | `page_links` | links (Google, WhatsApp, Instagram, site, outros), rótulo, URL, ordem, ativo |
-| `sales` | plaquinha, cliente, vendedor, data, valor, forma e status de pagamento |
-| `subscriptions` | empresa, início, vencimento, valor, status, referência Stripe |
+| `sales` | criada no momento do vínculo: plaquinha, cliente, vendedor, data, valor, forma e status de pagamento |
+| `subscriptions` | empresa, início (data do vínculo), vencimento (+12 meses), valor, status, referência Stripe |
 | `payments` | tipo (plaquinha/assinatura/renovação), valor, status, referência Stripe |
 | `commissions` | vendedor, origem (venda ou renovação), base, percentual, valor, status, data de pagamento |
 | `settings` | preço da plaquinha, valor da assinatura, % venda, % renovação, custo padrão |
