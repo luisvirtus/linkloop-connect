@@ -94,7 +94,7 @@ Receita (plaquinhas + assinaturas + renovações) − custos − comissões = re
 - Página pública renderizada no servidor, mobile-first, carga mínima.
 - Pagamentos via integração Stripe da Lovable (requer plano elegível); enquanto não habilitada, a assinatura fica em modo manual controlado pelo admin.
 
-## Pontos a confirmar
+## Decisões confirmadas
 
-- Vendedor pode registrar a venda ele mesmo, ou toda venda é lançada pelo admin?
-- A plaquinha já sai vendida com a primeira assinatura anual inclusa, ou a assinatura é cobrada à parte desde o início?
+- Venda = plaquinha lida e vinculada a uma empresa; o vendedor pode ser pré-atribuído às plaquinhas pelo admin ou pelo próprio vendedor.
+- A anuidade vence 12 meses após o vínculo; a renovação a partir daí gera comissão de renovação para o mesmo vendedor.
