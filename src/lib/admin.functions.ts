@@ -2,10 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function requireAdmin(context: any) {
-  const { data: isAdmin } = await context.supabase.rpc("has_role", {
+  const { data: isAdmin, error } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
     _role: "admin",
   });
+  if (error) {
+    console.error("Não foi possível validar o perfil administrativo.", error);
+    throw new Error("Não foi possível validar seu acesso. Tente novamente.");
+  }
   if (!isAdmin) throw new Error("Acesso restrito ao administrador.");
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   return supabaseAdmin;
