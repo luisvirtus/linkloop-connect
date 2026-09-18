@@ -1,5 +1,6 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import { ShieldCheck } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const META = [
   { title: "Administração — Plaquinhas QR" },
@@ -11,6 +12,20 @@ const META = [
 ];
 
 export const Route = createFileRoute("/_authenticated/admin")({
+  beforeLoad: async () => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) throw redirect({ to: "/entrar" });
+
+    const { data: roles, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+
+    if (error || !roles?.some(({ role }) => role === "admin")) {
+      throw redirect({ to: "/painel" });
+    }
+  },
   head: () => ({ meta: META }),
   component: AdminLayout,
 });
