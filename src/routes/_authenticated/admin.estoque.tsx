@@ -18,7 +18,8 @@ export const Route = createFileRoute("/_authenticated/admin/estoque")({
   component: Stock,
 });
 
-const STATUSES = ["available", "reserved", "sold", "linked", "donated", "lost", "blocked", "cancelled"];
+type PlateStatus = "available" | "reserved" | "sold" | "linked" | "donated" | "lost" | "blocked" | "cancelled";
+const STATUSES: PlateStatus[] = ["available", "reserved", "sold", "linked", "donated", "lost", "blocked", "cancelled"];
 
 function Stock() {
   const qc = useQueryClient();
@@ -27,13 +28,13 @@ function Stock() {
   const update = useServerFn(updatePlate);
   const unlink = useServerFn(unlinkPlate);
 
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<PlateStatus | "">("");
   const [search, setSearch] = useState("");
   const [batch, setBatch] = useState({ label: "", quantity: 100, size: "medium", unitCost: 0, sellerId: "" });
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "plates", status, search],
-    queryFn: () => fetchPlates({ data: { status: (status || null) as (typeof STATUSES)[number] | null, search: search || null } }),
+    queryFn: () => fetchPlates({ data: { status: status || null, search: search || null } }),
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin"] });
