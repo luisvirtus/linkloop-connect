@@ -17,9 +17,14 @@ import { Route as AuthenticatedPainelRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedVendedorRouteImport } from './routes/_authenticated/vendedor'
 import { Route as QCodeRouteImport } from './routes/q.$code'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as AuthenticatedAdminAuditoriaRouteImport } from './routes/_authenticated/admin.auditoria'
 import { Route as AuthenticatedAdminClientesRouteImport } from './routes/_authenticated/admin.clientes'
+import { Route as AuthenticatedAdminComercialRouteImport } from './routes/_authenticated/admin.comercial'
+import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin.configuracoes'
 import { Route as AuthenticatedAdminEstoqueRouteImport } from './routes/_authenticated/admin.estoque'
+import { Route as AuthenticatedAdminImpressaoRouteImport } from './routes/_authenticated/admin.impressao'
 import { Route as AuthenticatedAdminVendedoresRouteImport } from './routes/_authenticated/admin.vendedores'
+import { Route as AuthenticatedAdminClienteCompanyIdRouteImport } from './routes/_authenticated/admin.cliente.$companyId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -60,10 +65,28 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminAuditoriaRoute =
+  AuthenticatedAdminAuditoriaRouteImport.update({
+    id: '/auditoria',
+    path: '/auditoria',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminClientesRoute =
   AuthenticatedAdminClientesRouteImport.update({
     id: '/clientes',
     path: '/clientes',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminComercialRoute =
+  AuthenticatedAdminComercialRouteImport.update({
+    id: '/comercial',
+    path: '/comercial',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminConfiguracoesRoute =
+  AuthenticatedAdminConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminEstoqueRoute =
@@ -72,10 +95,22 @@ const AuthenticatedAdminEstoqueRoute =
     path: '/estoque',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminImpressaoRoute =
+  AuthenticatedAdminImpressaoRouteImport.update({
+    id: '/impressao',
+    path: '/impressao',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminVendedoresRoute =
   AuthenticatedAdminVendedoresRouteImport.update({
     id: '/vendedores',
     path: '/vendedores',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminClienteCompanyIdRoute =
+  AuthenticatedAdminClienteCompanyIdRouteImport.update({
+    id: '/cliente/$companyId',
+    path: '/cliente/$companyId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 
@@ -86,10 +121,15 @@ export interface FileRoutesByFullPath {
   '/painel': typeof AuthenticatedPainelRoute
   '/vendedor': typeof AuthenticatedVendedorRoute
   '/q/$code': typeof QCodeRoute
+  '/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
   '/admin/clientes': typeof AuthenticatedAdminClientesRoute
+  '/admin/comercial': typeof AuthenticatedAdminComercialRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
+  '/admin/impressao': typeof AuthenticatedAdminImpressaoRoute
   '/admin/vendedores': typeof AuthenticatedAdminVendedoresRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/admin/cliente/$companyId': typeof AuthenticatedAdminClienteCompanyIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -97,10 +137,15 @@ export interface FileRoutesByTo {
   '/painel': typeof AuthenticatedPainelRoute
   '/vendedor': typeof AuthenticatedVendedorRoute
   '/q/$code': typeof QCodeRoute
+  '/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
   '/admin/clientes': typeof AuthenticatedAdminClientesRoute
+  '/admin/comercial': typeof AuthenticatedAdminComercialRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
+  '/admin/impressao': typeof AuthenticatedAdminImpressaoRoute
   '/admin/vendedores': typeof AuthenticatedAdminVendedoresRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/admin/cliente/$companyId': typeof AuthenticatedAdminClienteCompanyIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -111,10 +156,15 @@ export interface FileRoutesById {
   '/_authenticated/painel': typeof AuthenticatedPainelRoute
   '/_authenticated/vendedor': typeof AuthenticatedVendedorRoute
   '/q/$code': typeof QCodeRoute
+  '/_authenticated/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
   '/_authenticated/admin/clientes': typeof AuthenticatedAdminClientesRoute
+  '/_authenticated/admin/comercial': typeof AuthenticatedAdminComercialRoute
+  '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
   '/_authenticated/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
+  '/_authenticated/admin/impressao': typeof AuthenticatedAdminImpressaoRoute
   '/_authenticated/admin/vendedores': typeof AuthenticatedAdminVendedoresRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/admin/cliente/$companyId': typeof AuthenticatedAdminClienteCompanyIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -125,10 +175,15 @@ export interface FileRouteTypes {
     | '/painel'
     | '/vendedor'
     | '/q/$code'
+    | '/admin/auditoria'
     | '/admin/clientes'
+    | '/admin/comercial'
+    | '/admin/configuracoes'
     | '/admin/estoque'
+    | '/admin/impressao'
     | '/admin/vendedores'
     | '/admin/'
+    | '/admin/cliente/$companyId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -136,10 +191,15 @@ export interface FileRouteTypes {
     | '/painel'
     | '/vendedor'
     | '/q/$code'
+    | '/admin/auditoria'
     | '/admin/clientes'
+    | '/admin/comercial'
+    | '/admin/configuracoes'
     | '/admin/estoque'
+    | '/admin/impressao'
     | '/admin/vendedores'
     | '/admin'
+    | '/admin/cliente/$companyId'
   id:
     | '__root__'
     | '/'
@@ -149,10 +209,15 @@ export interface FileRouteTypes {
     | '/_authenticated/painel'
     | '/_authenticated/vendedor'
     | '/q/$code'
+    | '/_authenticated/admin/auditoria'
     | '/_authenticated/admin/clientes'
+    | '/_authenticated/admin/comercial'
+    | '/_authenticated/admin/configuracoes'
     | '/_authenticated/admin/estoque'
+    | '/_authenticated/admin/impressao'
     | '/_authenticated/admin/vendedores'
     | '/_authenticated/admin/'
+    | '/_authenticated/admin/cliente/$companyId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -220,11 +285,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/auditoria': {
+      id: '/_authenticated/admin/auditoria'
+      path: '/auditoria'
+      fullPath: '/admin/auditoria'
+      preLoaderRoute: typeof AuthenticatedAdminAuditoriaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/clientes': {
       id: '/_authenticated/admin/clientes'
       path: '/clientes'
       fullPath: '/admin/clientes'
       preLoaderRoute: typeof AuthenticatedAdminClientesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/comercial': {
+      id: '/_authenticated/admin/comercial'
+      path: '/comercial'
+      fullPath: '/admin/comercial'
+      preLoaderRoute: typeof AuthenticatedAdminComercialRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/configuracoes': {
+      id: '/_authenticated/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/estoque': {
@@ -234,6 +320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminEstoqueRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/impressao': {
+      id: '/_authenticated/admin/impressao'
+      path: '/impressao'
+      fullPath: '/admin/impressao'
+      preLoaderRoute: typeof AuthenticatedAdminImpressaoRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/vendedores': {
       id: '/_authenticated/admin/vendedores'
       path: '/vendedores'
@@ -241,21 +334,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminVendedoresRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/cliente/$companyId': {
+      id: '/_authenticated/admin/cliente/$companyId'
+      path: '/cliente/$companyId'
+      fullPath: '/admin/cliente/$companyId'
+      preLoaderRoute: typeof AuthenticatedAdminClienteCompanyIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAuditoriaRoute: typeof AuthenticatedAdminAuditoriaRoute
   AuthenticatedAdminClientesRoute: typeof AuthenticatedAdminClientesRoute
+  AuthenticatedAdminComercialRoute: typeof AuthenticatedAdminComercialRoute
+  AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
   AuthenticatedAdminEstoqueRoute: typeof AuthenticatedAdminEstoqueRoute
+  AuthenticatedAdminImpressaoRoute: typeof AuthenticatedAdminImpressaoRoute
   AuthenticatedAdminVendedoresRoute: typeof AuthenticatedAdminVendedoresRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+  AuthenticatedAdminClienteCompanyIdRoute: typeof AuthenticatedAdminClienteCompanyIdRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAuditoriaRoute: AuthenticatedAdminAuditoriaRoute,
   AuthenticatedAdminClientesRoute: AuthenticatedAdminClientesRoute,
+  AuthenticatedAdminComercialRoute: AuthenticatedAdminComercialRoute,
+  AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
   AuthenticatedAdminEstoqueRoute: AuthenticatedAdminEstoqueRoute,
+  AuthenticatedAdminImpressaoRoute: AuthenticatedAdminImpressaoRoute,
   AuthenticatedAdminVendedoresRoute: AuthenticatedAdminVendedoresRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  AuthenticatedAdminClienteCompanyIdRoute:
+    AuthenticatedAdminClienteCompanyIdRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =

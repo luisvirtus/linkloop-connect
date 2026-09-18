@@ -9,12 +9,21 @@ import { savePage, saveLink, deleteLink, setPlateBlock, requestRenewal } from "@
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 
-type Search = { code?: string };
+type Search = { code?: string | undefined; companyId?: string | undefined };
 
 export const Route = createFileRoute("/_authenticated/painel")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    code: typeof s.code === "string" ? s.code : undefined,
+    code: typeof s["code"] === "string" ? s["code"] : undefined,
+    companyId: typeof s["companyId"] === "string" ? s["companyId"] : undefined,
   }),
+  head: () => ({ meta: [
+    { title: "Minha plaquinha — Plaquinhas QR" },
+    { name: "description", content: "Configure sua página, seus links e sua assinatura." },
+    { property: "og:title", content: "Minha plaquinha — Plaquinhas QR" },
+    { property: "og:description", content: "Gerencie sua plaquinha e sua página pública." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: ClientPanel,
 });
 
@@ -31,17 +40,18 @@ function ClientPanel() {
   const fetchAccount = useServerFn(getAccount);
 
   const account = useQuery({
-    queryKey: ["account"],
-    queryFn: () => fetchAccount({ data: {} }),
+    queryKey: ["account", search.companyId ?? "self"],
+    queryFn: () => fetchAccount({ data: { companyId: search.companyId ?? null } }),
   });
 
   if (account.isLoading) return <Shell><p className="text-sm text-muted-foreground">Carregando...</p></Shell>;
   if (account.error) return <Shell><p className="text-sm text-destructive">Não foi possível carregar seus dados.</p></Shell>;
 
-  const data = account.data!;
+  const data = account.data;
+  if (!data) return <Shell><p className="text-sm text-muted-foreground">Conta não encontrada.</p></Shell>;
 
   return (
-    <Shell isAdmin={data.isAdmin} isSeller={!!data.seller}>
+    <Shell isAdmin={data.isAdmin} isSeller={!!data.seller} impersonating={data.impersonating}>
       {!data.company ? (
         <LinkPlateCard initialCode={search.code ?? ""} onDone={() => qc.invalidateQueries({ queryKey: ["account"] })} />
       ) : (
@@ -55,10 +65,12 @@ function Shell({
   children,
   isAdmin,
   isSeller,
+  impersonating,
 }: {
   children: React.ReactNode;
   isAdmin?: boolean;
   isSeller?: boolean;
+  impersonating?: boolean;
 }) {
   return (
     <main className="min-h-screen bg-background">
@@ -82,7 +94,15 @@ function Shell({
           </div>
         </div>
       </header>
-      <div className="mx-auto max-w-3xl space-y-5 px-5 py-6">{children}</div>
+      <div className="mx-auto max-w-3xl space-y-5 px-5 py-6">
+        {impersonating ? (
+          <div className="flex items-center justify-between rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
+            <strong>Modo de suporte: visualizando a conta do cliente</strong>
+            <Link to="/admin/clientes" className="font-semibold text-primary">Voltar aos clientes</Link>
+          </div>
+        ) : null}
+        {children}
+      </div>
     </main>
   );
 }

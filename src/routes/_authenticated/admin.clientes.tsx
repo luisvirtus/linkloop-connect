@@ -5,6 +5,14 @@ import { listCompanies } from "@/lib/admin.functions";
 import { dateBR } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/clientes")({
+  head: () => ({ meta: [
+    { title: "Clientes — Plaquinhas QR" },
+    { name: "description", content: "Clientes, plaquinhas vinculadas e assinaturas." },
+    { property: "og:title", content: "Clientes — Plaquinhas QR" },
+    { property: "og:description", content: "Gestão de clientes e assinaturas." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Clients,
 });
 
@@ -51,7 +59,7 @@ function Clients() {
                 <td>
                   <button
                     className="text-xs font-semibold text-primary"
-                    onClick={() => navigate({ to: "/admin/cliente/$companyId", params: { companyId: c.id } })}
+                    onClick={() => navigate({ to: "/painel", search: { companyId: c.id } })}
                   >
                     Entrar como cliente
                   </button>

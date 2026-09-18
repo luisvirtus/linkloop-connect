@@ -5,6 +5,14 @@ import { getAdminDashboard } from "@/lib/admin.functions";
 import { brl, PLATE_STATUS_LABEL } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
+  head: () => ({ meta: [
+    { title: "Dashboard administrativo — Plaquinhas QR" },
+    { name: "description", content: "Indicadores de estoque, assinaturas, vendas e resultado financeiro." },
+    { property: "og:title", content: "Dashboard administrativo — Plaquinhas QR" },
+    { property: "og:description", content: "Visão geral da operação Plaquinhas QR." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: AdminDashboard,
 });
 

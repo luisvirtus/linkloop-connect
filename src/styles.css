@@ -175,3 +175,14 @@
     radial-gradient(circle at 80% 85%, oklch(0.78 0.15 80 / 0.2) 0 14px, transparent 14px),
     radial-gradient(circle at 15% 90%, oklch(0.62 0.15 150 / 0.18) 0 10px, transparent 10px);
 }
+
+@media print {
+  @page { size: A4; margin: 8mm; }
+  body { background: white; }
+  header, .print-controls { display: none !important; }
+  .print-sheet { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6mm; }
+  .plate-art { color: black; border-color: black; box-shadow: none; page-break-inside: avoid; }
+  .plate-art-small { width: 100mm; min-height: 100mm; }
+  .plate-art-medium { width: 150mm; min-height: 150mm; grid-column: 1 / -1; margin-inline: auto; }
+  .plate-art-large { width: 190mm; min-height: 190mm; grid-column: 1 / -1; margin-inline: auto; }
+}

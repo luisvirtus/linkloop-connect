@@ -7,10 +7,19 @@ import { createBatch, listPlates, unlinkPlate, updatePlate } from "@/lib/admin.f
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/estoque")({
+  head: () => ({ meta: [
+    { title: "Estoque — Plaquinhas QR" },
+    { name: "description", content: "Lotes, códigos QR, custos e situação das plaquinhas." },
+    { property: "og:title", content: "Estoque — Plaquinhas QR" },
+    { property: "og:description", content: "Controle de estoque e geração de lotes." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Stock,
 });
 
-const STATUSES = ["available", "reserved", "sold", "linked", "donated", "lost", "blocked", "cancelled"];
+type PlateStatus = "available" | "reserved" | "sold" | "linked" | "donated" | "lost" | "blocked" | "cancelled";
+const STATUSES: PlateStatus[] = ["available", "reserved", "sold", "linked", "donated", "lost", "blocked", "cancelled"];
 
 function Stock() {
   const qc = useQueryClient();
@@ -19,7 +28,7 @@ function Stock() {
   const update = useServerFn(updatePlate);
   const unlink = useServerFn(unlinkPlate);
 
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<PlateStatus | "">("");
   const [search, setSearch] = useState("");
   const [batch, setBatch] = useState({ label: "", quantity: 100, size: "medium", unitCost: 0, sellerId: "" });
 
@@ -97,7 +106,7 @@ function Stock() {
           <h2 className="font-display text-lg font-bold">Plaquinhas</h2>
           <div className="flex flex-wrap gap-2">
             <input className="input" placeholder="Buscar código" value={search} onChange={(e) => setSearch(e.target.value)} />
-            <select className="input" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <select className="input" value={status} onChange={(e) => setStatus(e.target.value as PlateStatus | "")}>
               <option value="">Todos os status</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>{PLATE_STATUS_LABEL[s]}</option>
