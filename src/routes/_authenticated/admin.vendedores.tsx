@@ -7,6 +7,14 @@ import { listSellers, saveSeller } from "@/lib/admin.functions";
 import { brl } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/vendedores")({
+  head: () => ({ meta: [
+    { title: "Vendedores — Plaquinhas QR" },
+    { name: "description", content: "Cadastro de vendedores, vendas e comissões." },
+    { property: "og:title", content: "Vendedores — Plaquinhas QR" },
+    { property: "og:description", content: "Gestão da equipe comercial." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Sellers,
 });
 

@@ -117,6 +117,20 @@ export const listPlates = createServerFn({ method: "POST" })
     };
   });
 
+export const listBatches = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const db = await requireAdmin(context);
+    const [{ data: batches }, { data: plates }] = await Promise.all([
+      db.from("batches").select("id, label, quantity, size, unit_cost, created_at").order("created_at", { ascending: false }),
+      db.from("plates").select("id, batch_id, serial, qr_code, size, status").order("serial", { ascending: true }),
+    ]);
+    return (batches ?? []).map((batch: any) => ({
+      ...batch,
+      plates: (plates ?? []).filter((plate: any) => plate.batch_id === batch.id),
+    }));
+  });
+
 export const createBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { label: string; quantity: number; size: string; unitCost: number; sellerId?: string | null }) => ({

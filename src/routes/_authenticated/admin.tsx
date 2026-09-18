@@ -1,7 +1,17 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { ShieldCheck } from "lucide-react";
 
+const META = [
+  { title: "Administração — Plaquinhas QR" },
+  { name: "description", content: "Gestão de plaquinhas, clientes, vendas, assinaturas e financeiro." },
+  { property: "og:title", content: "Administração — Plaquinhas QR" },
+  { property: "og:description", content: "Gestão completa da operação Plaquinhas QR." },
+  { property: "og:type", content: "website" },
+  { name: "twitter:card", content: "summary" },
+];
+
 export const Route = createFileRoute("/_authenticated/admin")({
+  head: () => ({ meta: META }),
   component: AdminLayout,
 });
 

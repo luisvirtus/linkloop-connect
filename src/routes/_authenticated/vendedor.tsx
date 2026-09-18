@@ -6,6 +6,14 @@ import { getSellerDashboard } from "@/lib/seller.functions";
 import { brl, dateBR, PLATE_STATUS_LABEL } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/vendedor")({
+  head: () => ({ meta: [
+    { title: "Painel do vendedor — Plaquinhas QR" },
+    { name: "description", content: "Vendas, plaquinhas e comissões do vendedor." },
+    { property: "og:title", content: "Painel do vendedor — Plaquinhas QR" },
+    { property: "og:description", content: "Acompanhe vendas e comissões." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: SellerPanel,
 });
 

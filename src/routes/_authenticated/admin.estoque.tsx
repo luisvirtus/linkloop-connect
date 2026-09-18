@@ -7,6 +7,14 @@ import { createBatch, listPlates, unlinkPlate, updatePlate } from "@/lib/admin.f
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/estoque")({
+  head: () => ({ meta: [
+    { title: "Estoque — Plaquinhas QR" },
+    { name: "description", content: "Lotes, códigos QR, custos e situação das plaquinhas." },
+    { property: "og:title", content: "Estoque — Plaquinhas QR" },
+    { property: "og:description", content: "Controle de estoque e geração de lotes." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Stock,
 });
 
