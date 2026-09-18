@@ -106,7 +106,7 @@ function Stock() {
           <h2 className="font-display text-lg font-bold">Plaquinhas</h2>
           <div className="flex flex-wrap gap-2">
             <input className="input" placeholder="Buscar código" value={search} onChange={(e) => setSearch(e.target.value)} />
-            <select className="input" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <select className="input" value={status} onChange={(e) => setStatus(e.target.value as PlateStatus | "")}>
               <option value="">Todos os status</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>{PLATE_STATUS_LABEL[s]}</option>
