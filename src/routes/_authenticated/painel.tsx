@@ -9,12 +9,12 @@ import { savePage, saveLink, deleteLink, setPlateBlock, requestRenewal } from "@
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 
-type Search = { code?: string; companyId?: string };
+type Search = { code?: string | undefined; companyId?: string | undefined };
 
 export const Route = createFileRoute("/_authenticated/painel")({
   validateSearch: (s: Record<string, unknown>): Search => ({
-    code: typeof s.code === "string" ? s.code : undefined,
-    companyId: typeof s.companyId === "string" ? s.companyId : undefined,
+    code: typeof s["code"] === "string" ? s["code"] : undefined,
+    companyId: typeof s["companyId"] === "string" ? s["companyId"] : undefined,
   }),
   head: () => ({ meta: [
     { title: "Minha plaquinha — Plaquinhas QR" },
@@ -47,7 +47,8 @@ function ClientPanel() {
   if (account.isLoading) return <Shell><p className="text-sm text-muted-foreground">Carregando...</p></Shell>;
   if (account.error) return <Shell><p className="text-sm text-destructive">Não foi possível carregar seus dados.</p></Shell>;
 
-  const data = account.data!;
+  const data = account.data;
+  if (!data) return <Shell><p className="text-sm text-muted-foreground">Conta não encontrada.</p></Shell>;
 
   return (
     <Shell isAdmin={data.isAdmin} isSeller={!!data.seller} impersonating={data.impersonating}>

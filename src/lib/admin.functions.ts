@@ -85,9 +85,11 @@ export const getAdminDashboard = createServerFn({ method: "POST" })
     };
   });
 
+type PlateStatus = "available" | "reserved" | "sold" | "linked" | "donated" | "lost" | "blocked" | "cancelled";
+
 export const listPlates = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { status?: string | null; search?: string | null } | undefined) => ({
+  .inputValidator((data: { status?: PlateStatus | null; search?: string | null } | undefined) => ({
     status: data?.status ?? null,
     search: data?.search?.trim() ?? null,
   }))

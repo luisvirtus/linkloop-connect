@@ -5,6 +5,14 @@ import { listAudit } from "@/lib/admin.functions";
 import { dateBR } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/auditoria")({
+  head: () => ({ meta: [
+    { title: "Auditoria — Plaquinhas QR" },
+    { name: "description", content: "Histórico de ações administrativas e alterações." },
+    { property: "og:title", content: "Auditoria — Plaquinhas QR" },
+    { property: "og:description", content: "Histórico de segurança e operação." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Audit,
 });
 

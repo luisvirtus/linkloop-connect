@@ -33,7 +33,7 @@ function Stock() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "plates", status, search],
-    queryFn: () => fetchPlates({ data: { status: status || null, search: search || null } }),
+    queryFn: () => fetchPlates({ data: { status: (status || null) as (typeof STATUSES)[number] | null, search: search || null } }),
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin"] });

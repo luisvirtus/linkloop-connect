@@ -4,8 +4,17 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getSettings, saveSettings } from "@/lib/admin.functions";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
+  head: () => ({ meta: [
+    { title: "Configurações — Plaquinhas QR" },
+    { name: "description", content: "Preços, custos e percentuais de comissão." },
+    { property: "og:title", content: "Configurações — Plaquinhas QR" },
+    { property: "og:description", content: "Configurações comerciais da plataforma." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Config,
 });
 
@@ -72,13 +81,14 @@ function Config() {
             <input type="number" className="input" value={form.commission_renewal_percent} onChange={e => setForm({...form, commission_renewal_percent: Number(e.target.value)})} />
           </Field>
         </div>
-        <button
-          className="mt-4 rounded-full bg-primary px-8 py-3 font-semibold text-primary-foreground disabled:opacity-60"
+        <Button
+          className="mt-4"
+          size="lg"
           onClick={() => saveMutation.mutate()}
           disabled={saveMutation.isPending}
         >
           {saveMutation.isPending ? "Salvando..." : "Salvar Configurações"}
-        </button>
+        </Button>
       </div>
     </div>
   );

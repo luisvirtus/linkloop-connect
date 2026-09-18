@@ -44,8 +44,8 @@ function SellerPanel() {
           <>
             <div className="grid gap-3 sm:grid-cols-3">
               <Stat label="Plaquinhas vendidas" value={String(data.sales?.length ?? 0)} />
-              <Stat label="Comissões a receber" value={brl(data.totals?.commissionsPending ?? 0)} />
-              <Stat label="Comissões pagas" value={brl(data.totals?.commissionsPaid ?? 0)} />
+              <Stat label="Comissões a receber" value={brl(data.totals?.pending ?? 0)} />
+              <Stat label="Comissões pagas" value={brl(data.totals?.paid ?? 0)} />
             </div>
 
             <div className="surface-card p-6">

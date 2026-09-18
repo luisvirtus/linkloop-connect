@@ -5,12 +5,12 @@ import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
 
-type Search = { next?: string; code?: string };
+type Search = { next?: string | undefined; code?: string | undefined };
 
 export const Route = createFileRoute("/entrar")({
   validateSearch: (search: Record<string, unknown>): Search => ({
-    next: typeof search.next === "string" ? search.next : undefined,
-    code: typeof search.code === "string" ? search.code : undefined,
+    next: typeof search["next"] === "string" ? search["next"] : undefined,
+    code: typeof search["code"] === "string" ? search["code"] : undefined,
   }),
   head: () => ({
     meta: [

@@ -5,8 +5,17 @@ import { toast } from "sonner";
 import { listSales, listSubscriptions, listPayments, confirmPayment, listCommissions, payCommission } from "@/lib/admin.functions";
 import { brl, dateBR } from "@/lib/format";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/admin/comercial")({
+  head: () => ({ meta: [
+    { title: "Comercial — Plaquinhas QR" },
+    { name: "description", content: "Vendas, assinaturas, pagamentos e comissões." },
+    { property: "og:title", content: "Comercial — Plaquinhas QR" },
+    { property: "og:description", content: "Gestão comercial e de recebimentos." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: Commercial,
 });
 
@@ -132,12 +141,13 @@ function Commercial() {
                     <td>{p.status}</td>
                     <td>
                       {p.status === "pending" && (
-                        <button
-                          className="text-xs font-semibold text-primary"
+                        <Button
+                          variant="link"
+                          size="sm"
                           onClick={() => confirmMutation.mutate(p.id)}
                         >
                           Confirmar
-                        </button>
+                        </Button>
                       )}
                     </td>
                   </tr>
@@ -171,12 +181,13 @@ function Commercial() {
                     <td>{c.status}</td>
                     <td>
                       {c.status === "pending" && (
-                        <button
-                          className="text-xs font-semibold text-primary"
+                        <Button
+                          variant="link"
+                          size="sm"
                           onClick={() => payMutation.mutate(c.id)}
                         >
                           Pagar
-                        </button>
+                        </Button>
                       )}
                     </td>
                   </tr>
