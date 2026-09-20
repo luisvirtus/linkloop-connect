@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listCompanies } from "@/lib/admin.functions";
 import { dateBR } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { LogIn } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/clientes")({
   head: () => ({ meta: [
@@ -57,12 +59,13 @@ function Clients() {
                 </td>
                 <td>{dateBR(c.created_at)}</td>
                 <td>
-                  <button
-                    className="text-xs font-semibold text-primary"
-                    onClick={() => navigate({ to: "/painel", search: { companyId: c.id } })}
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => navigate({ to: "/admin/cliente/$companyId", params: { companyId: c.id } })}
                   >
-                    Entrar como cliente
-                  </button>
+                    <LogIn /> Entrar como cliente
+                  </Button>
                 </td>
               </tr>
             ))}

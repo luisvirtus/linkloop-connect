@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getSettings, saveSettings } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
+import { BadgePercent, CircleDollarSign, Save, Settings2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
   head: () => ({ meta: [
@@ -23,7 +24,7 @@ function Config() {
   const fetchSettings = useServerFn(getSettings);
   const save = useServerFn(saveSettings);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "settings"],
     queryFn: () => fetchSettings({ data: {} } as any),
   });
@@ -47,7 +48,16 @@ function Config() {
   }, [data]);
 
   const saveMutation = useMutation({
-    mutationFn: () => save({ data: form }),
+    mutationFn: () => {
+      const values = Object.values(form);
+      if (values.some((value) => !Number.isFinite(value) || value < 0)) {
+        throw new Error("Informe apenas valores iguais ou maiores que zero.");
+      }
+      if (form.commission_sale_percent > 100 || form.commission_renewal_percent > 100) {
+        throw new Error("Os percentuais de comissão não podem passar de 100%.");
+      }
+      return save({ data: form });
+    },
     onSuccess: () => {
       toast.success("Configurações salvas.");
       qc.invalidateQueries({ queryKey: ["admin"] });
@@ -55,39 +65,58 @@ function Config() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  if (isLoading) return <p>Carregando...</p>;
+  if (isLoading) return <p className="text-sm text-muted-foreground">Carregando configurações...</p>;
+  if (error) return <p className="text-sm text-destructive">Não foi possível carregar as configurações.</p>;
 
   return (
-    <div className="surface-card max-w-2xl p-6">
-      <h2 className="font-display text-lg font-bold">Configurações do Sistema</h2>
-      <div className="mt-6 space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
+    <div className="max-w-3xl space-y-6">
+      <header>
+        <div className="flex items-center gap-2 text-primary"><Settings2 className="h-5 w-5" /><span className="text-sm font-semibold">Parâmetros comerciais</span></div>
+        <h1 className="mt-2 font-display text-2xl font-bold">Configurações do sistema</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Estes valores serão usados nas próximas vendas, assinaturas e comissões.</p>
+      </header>
+
+      <section className="surface-card p-6">
+        <div className="flex items-center gap-2">
+          <CircleDollarSign className="h-5 w-5 text-primary" />
+          <h2 className="font-display text-lg font-bold">Preços e custos</h2>
+        </div>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <Field label="Preço da Plaquinha (R$)">
-            <input type="number" step="0.01" className="input" value={form.plate_price} onChange={e => setForm({...form, plate_price: Number(e.target.value)})} />
+            <input type="number" min="0" step="0.01" className="input" value={form.plate_price} onChange={e => setForm({...form, plate_price: Number(e.target.value)})} />
           </Field>
           <Field label="Custo da Plaquinha (R$)">
-            <input type="number" step="0.01" className="input" value={form.plate_cost} onChange={e => setForm({...form, plate_cost: Number(e.target.value)})} />
+            <input type="number" min="0" step="0.01" className="input" value={form.plate_cost} onChange={e => setForm({...form, plate_cost: Number(e.target.value)})} />
           </Field>
           <Field label="Valor da Anuidade (R$)">
-            <input type="number" step="0.01" className="input" value={form.subscription_price} onChange={e => setForm({...form, subscription_price: Number(e.target.value)})} />
+            <input type="number" min="0" step="0.01" className="input" value={form.subscription_price} onChange={e => setForm({...form, subscription_price: Number(e.target.value)})} />
           </Field>
         </div>
-        <hr className="border-border" />
-        <div className="grid gap-4 sm:grid-cols-2">
+      </section>
+
+      <section className="surface-card p-6">
+        <div className="flex items-center gap-2">
+          <BadgePercent className="h-5 w-5 text-primary" />
+          <h2 className="font-display text-lg font-bold">Comissões</h2>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">Percentuais aplicados ao vendedor responsável pela plaquinha.</p>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <Field label="Comissão na Venda (%)">
-            <input type="number" className="input" value={form.commission_sale_percent} onChange={e => setForm({...form, commission_sale_percent: Number(e.target.value)})} />
+            <input type="number" min="0" max="100" step="0.01" className="input" value={form.commission_sale_percent} onChange={e => setForm({...form, commission_sale_percent: Number(e.target.value)})} />
           </Field>
           <Field label="Comissão na Renovação (%)">
-            <input type="number" className="input" value={form.commission_renewal_percent} onChange={e => setForm({...form, commission_renewal_percent: Number(e.target.value)})} />
+            <input type="number" min="0" max="100" step="0.01" className="input" value={form.commission_renewal_percent} onChange={e => setForm({...form, commission_renewal_percent: Number(e.target.value)})} />
           </Field>
         </div>
+      </section>
+
+      <div className="flex justify-end">
         <Button
-          className="mt-4"
           size="lg"
           onClick={() => saveMutation.mutate()}
           disabled={saveMutation.isPending}
         >
-          {saveMutation.isPending ? "Salvando..." : "Salvar Configurações"}
+          <Save /> {saveMutation.isPending ? "Salvando..." : "Salvar configurações"}
         </Button>
       </div>
     </div>
