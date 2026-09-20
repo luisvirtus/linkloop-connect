@@ -14,7 +14,7 @@ export type PublicPage = {
 };
 
 export const getPublicPage = createServerFn({ method: "GET" })
-  .inputValidator((data: { code: string }) => ({ code: String(data.code).trim() }))
+  .inputValidator((data: { code: string }) => ({ code: String(data.code).trim().toUpperCase() }))
   .handler(async ({ data }): Promise<PublicPage> => {
     const { createPublicClient } = await import("./supabase-public.server");
     const supabase = createPublicClient();
@@ -43,15 +43,13 @@ export const getPublicPage = createServerFn({ method: "GET" })
       .eq("id", plate.company_id)
       .maybeSingle();
 
-    const { data: subscription } = await supabase
-      .from("subscriptions")
-      .select("expires_at, status")
-      .eq("company_id", plate.company_id)
-      .order("expires_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // Subscription rows are private. This narrowly scoped function exposes only
+    // whether this company's public page may show its configured links.
+    const { data: subscriptionActive } = await supabase.rpc("is_company_subscription_active", {
+      _company_id: plate.company_id,
+    });
 
-    const expired = !subscription || new Date(subscription.expires_at).getTime() < Date.now();
+    const expired = subscriptionActive !== true;
 
     if (expired) {
       return {

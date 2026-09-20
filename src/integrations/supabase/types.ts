@@ -649,6 +649,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_company_subscription_active: {
+        Args: { _company_id: string }
+        Returns: boolean
+      }
       owns_company: { Args: { _company_id: string }; Returns: boolean }
     }
     Enums: {
