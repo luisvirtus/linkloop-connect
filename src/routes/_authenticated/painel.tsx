@@ -184,7 +184,7 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
   const [subtitle, setSubtitle] = useState(data.page?.subtitle ?? "");
   const [website, setWebsite] = useState(data.company.website_url ?? "");
   const [google, setGoogle] = useState(data.page?.google_review_url ?? "");
-  const active = data.subscriptionActive;
+  const active = data.subscriptionActive || data.impersonating;
 
   const saveMutation = useMutation({
     mutationFn: () =>
@@ -238,7 +238,7 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
 
   return (
     <>
-      {!active ? (
+      {!data.subscriptionActive && !data.impersonating ? (
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
           <p className="font-semibold text-destructive">Assinatura vencida</p>
           <p className="mt-1 text-sm text-muted-foreground">

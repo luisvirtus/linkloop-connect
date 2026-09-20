@@ -7,4 +7,4 @@
 - [ ] Assinatura (12 meses após vínculo) + Stripe/webhooks
 - [x] Vendas, vendedores, comissões, financeiro
 - [x] Painel admin completo, "entrar como cliente", auditoria
-- [ ] Refinar Comercial, Configurações, Auditoria e acesso como cliente
+- [x] Refinar Comercial, Configurações, Auditoria e acesso como cliente

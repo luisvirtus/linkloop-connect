@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listAudit } from "@/lib/admin.functions";
-import { dateBR } from "@/lib/format";
+import { dateTimeBR } from "@/lib/format";
 import { useMemo, useState } from "react";
 import { Search, ScrollText } from "lucide-react";
 
@@ -77,7 +77,7 @@ function Audit() {
           <tbody>
             {filtered.map((l: any) => (
               <tr key={l.id} className="border-t border-border">
-                <td className="whitespace-nowrap px-5 py-3">{dateBR(l.created_at)}</td>
+                <td className="whitespace-nowrap px-5 py-3">{dateTimeBR(l.created_at)}</td>
                 <td>{l.user_label}</td>
                 <td><span className="rounded-md bg-secondary px-2 py-1 text-xs font-semibold">{actionLabel(l.action)}</span></td>
                 <td>{entityLabel(l.entity)}</td>
