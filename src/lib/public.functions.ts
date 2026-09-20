@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { normalizeLinkValue } from "@/lib/link-channels";
 
 export type PublicLink = { id: string; kind: string; label: string; url: string };
 
@@ -70,7 +71,13 @@ export const getPublicPage = createServerFn({ method: "GET" })
         .eq("page_id", page.id)
         .eq("active", true)
         .order("position", { ascending: true });
-      links = rows ?? [];
+      links = (rows ?? []).flatMap((link) => {
+        try {
+          return [{ ...link, url: normalizeLinkValue(link.kind, link.url) }];
+        } catch {
+          return [];
+        }
+      });
     }
 
     return {
