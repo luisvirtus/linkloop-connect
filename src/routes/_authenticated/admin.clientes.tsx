@@ -59,7 +59,7 @@ function Clients() {
                 <td>
                   <button
                     className="text-xs font-semibold text-primary"
-                    onClick={() => navigate({ to: "/painel", search: { companyId: c.id } })}
+                    onClick={() => navigate({ to: "/admin/cliente/$companyId", params: { companyId: c.id } })}
                   >
                     Entrar como cliente
                   </button>
