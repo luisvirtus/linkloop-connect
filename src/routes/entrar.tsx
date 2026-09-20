@@ -52,7 +52,14 @@ function SignIn() {
   const signIn = async () => {
     setLoading(true);
     try {
-      await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+      const callbackUrl = new URL("/entrar", window.location.origin);
+      if (search.next) callbackUrl.searchParams.set("next", search.next);
+      if (search.code) callbackUrl.searchParams.set("code", search.code);
+
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: callbackUrl.toString(),
+      });
+      if (result.error) throw result.error;
     } catch (error) {
       toast.error("Não foi possível entrar com o Google. Tente novamente.");
       console.error(error);

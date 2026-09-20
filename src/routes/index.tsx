@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { QrCode, Star, Smartphone, ShieldCheck } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,6 +24,8 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const { user, loading } = useAuth();
+
   return (
     <main className="min-h-screen bg-background">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
@@ -31,10 +34,10 @@ function Home() {
           Plaquinhas QR
         </div>
         <Link
-          to="/entrar"
+          to={user ? "/painel" : "/entrar"}
           className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
         >
-          Entrar
+          {loading ? "Verificando..." : user ? "Minha conta" : "Entrar"}
         </Link>
       </header>
 
@@ -51,10 +54,10 @@ function Home() {
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            to="/entrar"
+            to={user ? "/painel" : "/entrar"}
             className="w-full rounded-full bg-primary px-8 py-3 text-base font-semibold text-primary-foreground sm:w-auto"
           >
-            Ativar minha plaquinha
+            {user ? "Acessar meu painel" : "Ativar minha plaquinha"}
           </Link>
           <a
             href="#como-funciona"
