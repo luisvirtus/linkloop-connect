@@ -8,6 +8,7 @@ import { getAccount, getPlateByCode, linkPlate } from "@/lib/account.functions";
 import { savePage, saveLink, deleteLink, setPlateBlock, requestRenewal } from "@/lib/page.functions";
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
+import { channelFor, editableLinkValue, LINK_CHANNELS, normalizeLinkValue } from "@/lib/link-channels";
 
 type Search = { code?: string | undefined; companyId?: string | undefined };
 
@@ -26,13 +27,6 @@ export const Route = createFileRoute("/_authenticated/painel")({
   ] }),
   component: ClientPanel,
 });
-
-const LINK_KINDS = [
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "instagram", label: "Instagram" },
-  { value: "website", label: "Site" },
-  { value: "other", label: "Outro" },
-];
 
 function ClientPanel() {
   const search = useSearch({ from: "/_authenticated/painel" });
@@ -208,7 +202,10 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
   });
 
   const linkMutation = useMutation({
-    mutationFn: (payload: any) => upsertLink({ data: { companyId: data.company.id, pageId: data.page.id, ...payload } }),
+    mutationFn: (payload: any) => {
+      const url = normalizeLinkValue(payload.kind, payload.url);
+      return upsertLink({ data: { companyId: data.company.id, pageId: data.page.id, ...payload, url } });
+    },
     onSuccess: () => {
       toast.success("Link salvo.");
       onChange();
@@ -286,23 +283,7 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
         <h2 className="font-display text-lg font-bold">Seus links</h2>
         <div className="mt-4 space-y-3">
           {data.links.map((l: any) => (
-            <div key={l.id} className="flex items-center gap-2">
-              <input
-                className="input flex-1"
-                defaultValue={l.label}
-                disabled={!active}
-                onBlur={(e) => e.target.value !== l.label && linkMutation.mutate({ id: l.id, kind: l.kind, label: e.target.value, url: l.url, position: l.position })}
-              />
-              <input
-                className="input flex-1"
-                defaultValue={l.url}
-                disabled={!active}
-                onBlur={(e) => e.target.value !== l.url && linkMutation.mutate({ id: l.id, kind: l.kind, label: l.label, url: e.target.value, position: l.position })}
-              />
-              <button disabled={!active} onClick={() => deleteMutation.mutate(l.id)} className="text-muted-foreground">
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
+            <ExistingLink key={l.id} link={l} active={active} onSave={(payload) => linkMutation.mutate(payload)} onDelete={() => deleteMutation.mutate(l.id)} />
           ))}
           {data.links.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum link ainda.</p> : null}
 
@@ -313,16 +294,17 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
               disabled={!active}
               onChange={(e) => {
                 const kind = e.target.value;
-                setNewLink((s) => ({ ...s, kind, label: LINK_KINDS.find((k) => k.value === kind)?.label ?? "Link" }));
+                setNewLink((s) => ({ ...s, kind, label: channelFor(kind).label, url: "" }));
               }}
             >
-              {LINK_KINDS.map((k) => (
+              {LINK_CHANNELS.map((k) => (
                 <option key={k.value} value={k.value}>{k.label}</option>
               ))}
             </select>
             <input
               className="input flex-1"
-              placeholder="https://..."
+              placeholder={channelFor(newLink.kind).placeholder}
+              inputMode={channelFor(newLink.kind).inputMode}
               value={newLink.url}
               disabled={!active}
               onChange={(e) => setNewLink((s) => ({ ...s, url: e.target.value }))}
@@ -384,6 +366,27 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
         )}
       </div>
     </>
+  );
+}
+
+function ExistingLink({ link, active, onSave, onDelete }: { link: any; active: boolean; onSave: (payload: any) => void; onDelete: () => void }) {
+  const [label, setLabel] = useState(link.label);
+  const [value, setValue] = useState(editableLinkValue(link.kind, link.url));
+  const channel = channelFor(link.kind);
+  const saveIfChanged = () => {
+    if (label !== link.label || value !== editableLinkValue(link.kind, link.url)) {
+      onSave({ id: link.id, kind: link.kind, label, url: value, position: link.position });
+    }
+  };
+  return (
+    <div className="grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-[140px_1fr_1fr_auto] sm:items-center">
+      <span className="text-sm font-semibold">{channel.label}</span>
+      <input className="input" aria-label={`Nome de ${channel.label}`} value={label} disabled={!active} onChange={(e) => setLabel(e.target.value)} onBlur={saveIfChanged} />
+      <input className="input" aria-label={`Contato de ${channel.label}`} value={value} placeholder={channel.placeholder} inputMode={channel.inputMode} disabled={!active} onChange={(e) => setValue(e.target.value)} onBlur={saveIfChanged} />
+      <button aria-label={`Excluir ${channel.label}`} title="Excluir" disabled={!active} onClick={onDelete} className="text-muted-foreground">
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
   );
 }
 

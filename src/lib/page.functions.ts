@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { LINK_CHANNELS, normalizeLinkValue } from "@/lib/link-channels";
 
 const EXPIRED_MSG = "Para alterar as informações da sua página, é necessário renovar sua assinatura.";
 
@@ -42,6 +43,8 @@ export const savePage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCanEdit(context.supabase, context.userId, data.companyId);
+    if (!LINK_CHANNELS.some((channel) => channel.value === data.kind)) throw new Error("Tipo de canal inválido.");
+    const normalizedUrl = normalizeLinkValue(data.kind, data.url);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin
       .from("pages")
@@ -87,7 +90,7 @@ export const saveLink = createServerFn({ method: "POST" })
       page_id: data.pageId,
       kind: data.kind,
       label: data.label,
-      url: data.url,
+      url: normalizedUrl,
       position: data.position ?? 0,
       active: data.active ?? true,
     };

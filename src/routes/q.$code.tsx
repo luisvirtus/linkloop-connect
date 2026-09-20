@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Star, Globe, MessageCircle, Instagram, Link2, QrCode } from "lucide-react";
+import { Star, Globe, MessageCircle, Instagram, Link2, QrCode, Facebook, Youtube, Linkedin, Music2, AtSign, Send, Mail, Phone, MapPin } from "lucide-react";
 import { getPublicPage } from "@/lib/public.functions";
 
 export const Route = createFileRoute("/q/$code")({
@@ -29,6 +29,15 @@ const ICONS: Record<string, typeof Link2> = {
   instagram: Instagram,
   website: Globe,
   google: Star,
+  facebook: Facebook,
+  youtube: Youtube,
+  linkedin: Linkedin,
+  tiktok: Music2,
+  x: AtSign,
+  telegram: Send,
+  email: Mail,
+  phone: Phone,
+  maps: MapPin,
 };
 
 function Message({ title, text }: { title: string; text: string }) {
