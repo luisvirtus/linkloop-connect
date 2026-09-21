@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { LINK_CHANNELS, normalizeLinkValue } from "@/lib/link-channels";
+import { LINK_CHANNELS, normalizeLinkValue, normalizeOptionalWebUrl } from "@/lib/link-channels";
 
 const EXPIRED_MSG = "Para alterar as informações da sua página, é necessário renovar sua assinatura.";
 
@@ -43,8 +43,8 @@ export const savePage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCanEdit(context.supabase, context.userId, data.companyId);
-    if (!LINK_CHANNELS.some((channel) => channel.value === data.kind)) throw new Error("Tipo de canal inválido.");
-    const normalizedUrl = normalizeLinkValue(data.kind, data.url);
+    const websiteUrl = normalizeOptionalWebUrl(data.websiteUrl);
+    const googleReviewUrl = normalizeOptionalWebUrl(data.googleReviewUrl);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin
       .from("pages")
@@ -52,13 +52,13 @@ export const savePage = createServerFn({ method: "POST" })
         title: data.title,
         subtitle: data.subtitle || null,
         logo_url: data.logoUrl || null,
-        google_review_url: data.googleReviewUrl || null,
+        google_review_url: googleReviewUrl,
       })
       .eq("id", data.pageId)
       .eq("company_id", data.companyId);
     await supabaseAdmin
       .from("companies")
-      .update({ name: data.companyName, website_url: data.websiteUrl || null, logo_url: data.logoUrl || null })
+      .update({ name: data.companyName, website_url: websiteUrl, logo_url: data.logoUrl || null })
       .eq("id", data.companyId);
     await supabaseAdmin.from("audit_logs").insert({
       user_id: context.userId,
@@ -85,6 +85,8 @@ export const saveLink = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertCanEdit(context.supabase, context.userId, data.companyId);
+    if (!LINK_CHANNELS.some((channel) => channel.value === data.kind)) throw new Error("Tipo de canal inválido.");
+    const normalizedUrl = normalizeLinkValue(data.kind, data.url);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const payload = {
       page_id: data.pageId,

@@ -5,6 +5,8 @@ export type LinkChannel = {
   inputMode?: "text" | "tel" | "email" | "url";
 };
 
+const OTHER_CHANNEL: LinkChannel = { value: "other", label: "Outro link", placeholder: "https://...", inputMode: "url" };
+
 export const LINK_CHANNELS: LinkChannel[] = [
   { value: "whatsapp", label: "WhatsApp", placeholder: "(11) 99999-9999", inputMode: "tel" },
   { value: "instagram", label: "Instagram", placeholder: "@suaempresa" },
@@ -18,7 +20,7 @@ export const LINK_CHANNELS: LinkChannel[] = [
   { value: "phone", label: "Telefone", placeholder: "(11) 3333-4444", inputMode: "tel" },
   { value: "maps", label: "Localização", placeholder: "Link do Google Maps", inputMode: "url" },
   { value: "website", label: "Site", placeholder: "suaempresa.com.br", inputMode: "url" },
-  { value: "other", label: "Outro link", placeholder: "https://...", inputMode: "url" },
+  OTHER_CHANNEL,
 ];
 
 const PROFILE_BASE: Record<string, string> = {
@@ -36,6 +38,16 @@ function webUrl(value: string) {
   const parsed = new URL(candidate);
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("Informe um endereço válido.");
   return parsed.toString();
+}
+
+function profileHandle(value: string, kind: string) {
+  const withoutAt = value.replace(/^@/, "").replace(/^\/+|\/+$/g, "");
+  if (!withoutAt || /\s/.test(withoutAt)) throw new Error("Informe um usuário ou endereço válido.");
+  if (kind === "youtube") return withoutAt.startsWith("channel/") ? withoutAt : `@${withoutAt}`;
+  if (kind === "linkedin" && !withoutAt.startsWith("in/") && !withoutAt.startsWith("company/")) {
+    return `company/${withoutAt}`;
+  }
+  return withoutAt;
 }
 
 function brazilianNumber(value: string) {
@@ -64,11 +76,14 @@ export function normalizeLinkValue(kind: string, rawValue: string) {
   }
   if (PROFILE_BASE[kind]) {
     if (/^(https?:\/\/|www\.)/i.test(value)) return webUrl(value);
-    const handle = value.replace(/^@/, "").replace(/^\/+|\/+$/g, "");
-    if (!handle || /\s/.test(handle)) throw new Error("Informe um usuário ou endereço válido.");
-    return `${PROFILE_BASE[kind]}${kind === "youtube" && value.startsWith("@") ? "@" : ""}${handle}`;
+    return `${PROFILE_BASE[kind]}${profileHandle(value, kind)}`;
   }
   return webUrl(value);
+}
+
+export function normalizeOptionalWebUrl(rawValue?: string | null) {
+  const value = rawValue?.trim();
+  return value ? webUrl(value) : null;
 }
 
 export function editableLinkValue(kind: string, value: string) {
@@ -78,6 +93,6 @@ export function editableLinkValue(kind: string, value: string) {
   return value;
 }
 
-export function channelFor(kind: string) {
-  return LINK_CHANNELS.find((channel) => channel.value === kind) ?? LINK_CHANNELS[LINK_CHANNELS.length - 1];
+export function channelFor(kind: string): LinkChannel {
+  return LINK_CHANNELS.find((channel) => channel.value === kind) ?? OTHER_CHANNEL;
 }
