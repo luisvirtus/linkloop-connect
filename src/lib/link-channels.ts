@@ -5,6 +5,8 @@ export type LinkChannel = {
   inputMode?: "text" | "tel" | "email" | "url";
 };
 
+const OTHER_CHANNEL: LinkChannel = { value: "other", label: "Outro link", placeholder: "https://...", inputMode: "url" };
+
 export const LINK_CHANNELS: LinkChannel[] = [
   { value: "whatsapp", label: "WhatsApp", placeholder: "(11) 99999-9999", inputMode: "tel" },
   { value: "instagram", label: "Instagram", placeholder: "@suaempresa" },
@@ -18,7 +20,7 @@ export const LINK_CHANNELS: LinkChannel[] = [
   { value: "phone", label: "Telefone", placeholder: "(11) 3333-4444", inputMode: "tel" },
   { value: "maps", label: "Localização", placeholder: "Link do Google Maps", inputMode: "url" },
   { value: "website", label: "Site", placeholder: "suaempresa.com.br", inputMode: "url" },
-  { value: "other", label: "Outro link", placeholder: "https://...", inputMode: "url" },
+  OTHER_CHANNEL,
 ];
 
 const PROFILE_BASE: Record<string, string> = {
@@ -91,6 +93,6 @@ export function editableLinkValue(kind: string, value: string) {
   return value;
 }
 
-export function channelFor(kind: string) {
-  return LINK_CHANNELS.find((channel) => channel.value === kind) ?? LINK_CHANNELS[LINK_CHANNELS.length - 1];
+export function channelFor(kind: string): LinkChannel {
+  return LINK_CHANNELS.find((channel) => channel.value === kind) ?? OTHER_CHANNEL;
 }
