@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { normalizeLinkValue } from "@/lib/link-channels";
+import { normalizeLinkValue, normalizeOptionalWebUrl } from "@/lib/link-channels";
 
 export type PublicLink = { id: string; kind: string; label: string; url: string };
 
@@ -58,7 +58,7 @@ export const getPublicPage = createServerFn({ method: "GET" })
         companyName: company?.name ?? page?.title ?? "Empresa",
         title: page?.title ?? company?.name ?? "Empresa",
         logoUrl: page?.logo_url ?? company?.logo_url ?? null,
-        websiteUrl: company?.website_url ?? null,
+        websiteUrl: normalizeOptionalWebUrl(company?.website_url),
         links: [],
       };
     }
@@ -86,8 +86,8 @@ export const getPublicPage = createServerFn({ method: "GET" })
       title: page?.title ?? company?.name ?? "Empresa",
       subtitle: page?.subtitle ?? null,
       logoUrl: page?.logo_url ?? company?.logo_url ?? null,
-      websiteUrl: company?.website_url ?? null,
-      googleReviewUrl: page?.google_review_url ?? null,
+      websiteUrl: normalizeOptionalWebUrl(company?.website_url),
+      googleReviewUrl: normalizeOptionalWebUrl(page?.google_review_url),
       links,
     };
   });

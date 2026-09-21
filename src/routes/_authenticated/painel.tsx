@@ -9,6 +9,7 @@ import { savePage, saveLink, deleteLink, setPlateBlock, requestRenewal } from "@
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { channelFor, editableLinkValue, LINK_CHANNELS, normalizeLinkValue } from "@/lib/link-channels";
+import { Button } from "@/components/ui/button";
 
 type Search = { code?: string | undefined; companyId?: string | undefined };
 
@@ -309,16 +310,20 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
               disabled={!active}
               onChange={(e) => setNewLink((s) => ({ ...s, url: e.target.value }))}
             />
-            <button
-              className="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+            <Button
               disabled={!active || !newLink.url}
               onClick={() => {
-                linkMutation.mutate({ ...newLink, position: data.links.length });
-                setNewLink({ kind: "whatsapp", label: "WhatsApp", url: "" });
+                try {
+                  normalizeLinkValue(newLink.kind, newLink.url);
+                  linkMutation.mutate({ ...newLink, position: data.links.length });
+                  setNewLink({ kind: "whatsapp", label: "WhatsApp", url: "" });
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : "Confira o contato informado.");
+                }
               }}
             >
               Adicionar
-            </button>
+            </Button>
           </div>
         </div>
       </div>

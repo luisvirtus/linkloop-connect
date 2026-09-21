@@ -38,6 +38,16 @@ function webUrl(value: string) {
   return parsed.toString();
 }
 
+function profileHandle(value: string, kind: string) {
+  const withoutAt = value.replace(/^@/, "").replace(/^\/+|\/+$/g, "");
+  if (!withoutAt || /\s/.test(withoutAt)) throw new Error("Informe um usuário ou endereço válido.");
+  if (kind === "youtube") return withoutAt.startsWith("channel/") ? withoutAt : `@${withoutAt}`;
+  if (kind === "linkedin" && !withoutAt.startsWith("in/") && !withoutAt.startsWith("company/")) {
+    return `company/${withoutAt}`;
+  }
+  return withoutAt;
+}
+
 function brazilianNumber(value: string) {
   let digits = value.replace(/\D/g, "");
   if (digits.startsWith("0")) digits = digits.slice(1);
@@ -64,11 +74,14 @@ export function normalizeLinkValue(kind: string, rawValue: string) {
   }
   if (PROFILE_BASE[kind]) {
     if (/^(https?:\/\/|www\.)/i.test(value)) return webUrl(value);
-    const handle = value.replace(/^@/, "").replace(/^\/+|\/+$/g, "");
-    if (!handle || /\s/.test(handle)) throw new Error("Informe um usuário ou endereço válido.");
-    return `${PROFILE_BASE[kind]}${kind === "youtube" && value.startsWith("@") ? "@" : ""}${handle}`;
+    return `${PROFILE_BASE[kind]}${profileHandle(value, kind)}`;
   }
   return webUrl(value);
+}
+
+export function normalizeOptionalWebUrl(rawValue?: string | null) {
+  const value = rawValue?.trim();
+  return value ? webUrl(value) : null;
 }
 
 export function editableLinkValue(kind: string, value: string) {
