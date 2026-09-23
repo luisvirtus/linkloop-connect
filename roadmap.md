@@ -8,3 +8,4 @@
 - [x] Vendas, vendedores, comissões, financeiro
 - [x] Painel admin completo, "entrar como cliente", auditoria
 - [x] Refinar Comercial, Configurações, Auditoria e acesso como cliente
+- [ ] CRUD administrativo: Estoque, Clientes, Vendedores, Comercial, Configurações e Auditoria
