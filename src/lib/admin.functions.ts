@@ -187,7 +187,7 @@ export const createBatch = createServerFn({ method: "POST" })
 
 export const updatePlate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { plateId: string; status?: string; sellerId?: string | null; notes?: string | null; blockedByAdmin?: boolean }) => data)
+  .inputValidator((data: { plateId: string; status?: string; sellerId?: string | null; notes?: string | null; blockedByAdmin?: boolean; cost?: number; price?: number | null }) => data)
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
     const patch: any = {};
@@ -195,6 +195,8 @@ export const updatePlate = createServerFn({ method: "POST" })
     if (data.sellerId !== undefined) patch.seller_id = data.sellerId || null;
     if (data.notes !== undefined) patch.notes = data.notes;
     if (data.blockedByAdmin !== undefined) patch.blocked_by_admin = data.blockedByAdmin;
+    if (data.cost !== undefined) patch.cost = Math.max(0, Number(data.cost));
+    if (data.price !== undefined) patch.price = data.price === null ? null : Math.max(0, Number(data.price));
     const { error } = await db.from("plates").update(patch).eq("id", data.plateId);
     if (error) throw new Error(error.message);
     await audit(db, context.userId, "plate.update", "plates", data.plateId, patch);
@@ -245,6 +247,56 @@ export const listCompanies = createServerFn({ method: "POST" })
     });
   });
 
+export const listAdminOptions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const db = await requireAdmin(context);
+    const [{ data: companies }, { data: profiles }, { data: plates }, { data: sellers }, { data: subscriptions }, { data: sales }] = await Promise.all([
+      db.from("companies").select("id, name").order("name"),
+      db.from("profiles").select("id, email, full_name").order("email"),
+      db.from("plates").select("id, qr_code, company_id").order("serial"),
+      db.from("sellers").select("id, name").order("name"),
+      db.from("subscriptions").select("id, company_id, expires_at").order("expires_at", { ascending: false }),
+      db.from("sales").select("id, company_id, plate_id, amount").order("sold_at", { ascending: false }),
+    ]);
+    return { companies: companies ?? [], profiles: profiles ?? [], plates: plates ?? [], sellers: sellers ?? [], subscriptions: subscriptions ?? [], sales: sales ?? [] };
+  });
+
+export const saveCompany = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id?: string | null; name: string; ownerId: string; websiteUrl?: string | null }) => ({
+    ...data,
+    name: data.name.trim(),
+    websiteUrl: data.websiteUrl?.trim() || null,
+  }))
+  .handler(async ({ data, context }) => {
+    const db = await requireAdmin(context);
+    if (!data.name || !data.ownerId) throw new Error("Informe o nome e o responsável.");
+    const payload = { name: data.name, owner_id: data.ownerId, website_url: data.websiteUrl };
+    let id = data.id ?? null;
+    if (id) {
+      const { error } = await db.from("companies").update(payload).eq("id", id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { data: row, error } = await db.from("companies").insert(payload).select("id").single();
+      if (error) throw new Error(error.message);
+      id = row.id;
+    }
+    await audit(db, context.userId, data.id ? "company.update" : "company.create", "companies", id, { name: data.name });
+    return { ok: true, id };
+  });
+
+export const deleteAdminRecord = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { entity: "plates" | "batches" | "companies" | "sellers" | "sales" | "subscriptions" | "payments" | "commissions" | "audit_logs"; id: string }) => data)
+  .handler(async ({ data, context }) => {
+    const db = await requireAdmin(context);
+    const { error } = await db.from(data.entity).delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    if (data.entity !== "audit_logs") await audit(db, context.userId, `${data.entity}.delete`, data.entity, data.id);
+    return { ok: true };
+  });
+
 export const listSellers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -292,6 +344,42 @@ export const saveSeller = createServerFn({ method: "POST" })
     }
     await audit(db, context.userId, data.id ? "seller.update" : "seller.create", "sellers", id, { name: payload.name });
     return { ok: true, id, linkedUser: !!userId };
+  });
+
+type CommercialEntity = "sales" | "subscriptions" | "payments" | "commissions";
+
+export const saveCommercialRecord = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { entity: CommercialEntity; id?: string | null; values: Record<string, unknown> }) => data)
+  .handler(async ({ data, context }) => {
+    const db = await requireAdmin(context);
+    const v = data.values;
+    let payload: Record<string, unknown>;
+    if (data.entity === "sales") {
+      if (!v.plate_id || !v.company_id) throw new Error("Selecione a empresa e a plaquinha.");
+      payload = { plate_id: v.plate_id, company_id: v.company_id, seller_id: v.seller_id || null, amount: Math.max(0, Number(v.amount)), cost: Math.max(0, Number(v.cost)), payment_method: v.payment_method || null, payment_status: v.payment_status, sold_at: v.sold_at };
+    } else if (data.entity === "subscriptions") {
+      if (!v.company_id || !v.expires_at) throw new Error("Selecione a empresa e informe o vencimento.");
+      payload = { company_id: v.company_id, plate_id: v.plate_id || null, starts_at: v.starts_at, expires_at: v.expires_at, amount: Math.max(0, Number(v.amount)), status: v.status };
+    } else if (data.entity === "payments") {
+      payload = { company_id: v.company_id || null, subscription_id: v.subscription_id || null, sale_id: v.sale_id || null, kind: v.kind, amount: Math.max(0, Number(v.amount)), status: v.status, stripe_reference: v.stripe_reference || null, paid_at: v.status === "paid" ? (v.paid_at || new Date().toISOString()) : null };
+    } else {
+      if (!v.seller_id) throw new Error("Selecione o vendedor.");
+      const base = Math.max(0, Number(v.base_amount));
+      const percent = Math.min(100, Math.max(0, Number(v.percent)));
+      payload = { seller_id: v.seller_id, kind: v.kind, sale_id: v.sale_id || null, subscription_id: v.subscription_id || null, base_amount: base, percent, amount: Math.max(0, Number(v.amount ?? (base * percent) / 100)), status: v.status, paid_at: v.status === "paid" ? (v.paid_at || new Date().toISOString()) : null };
+    }
+    let id = data.id ?? null;
+    if (id) {
+      const { error } = await db.from(data.entity).update(payload).eq("id", id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { data: row, error } = await db.from(data.entity).insert(payload).select("id").single();
+      if (error) throw new Error(error.message);
+      id = row.id;
+    }
+    await audit(db, context.userId, `${data.entity}.${data.id ? "update" : "create"}`, data.entity, id);
+    return { ok: true, id };
   });
 
 export const listSales = createServerFn({ method: "POST" })
@@ -451,6 +539,17 @@ export const saveSettings = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const resetSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const db = await requireAdmin(context);
+    const defaults = { id: true, plate_price: 80, plate_cost: 20, subscription_price: 99, commission_sale_percent: 10, commission_renewal_percent: 5 };
+    const { error } = await db.from("settings").upsert(defaults, { onConflict: "id" });
+    if (error) throw new Error(error.message);
+    await audit(db, context.userId, "settings.reset", "settings", null, defaults);
+    return defaults;
+  });
+
 export const listAudit = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -461,4 +560,22 @@ export const listAudit = createServerFn({ method: "POST" })
     ]);
     const pm = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p.email ?? p.full_name]));
     return (logs ?? []).map((l: any) => ({ ...l, user_label: l.user_id ? pm[l.user_id] ?? l.user_id : "sistema" }));
+  });
+
+export const saveAuditNote = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id?: string | null; note: string }) => ({ id: data.id ?? null, note: data.note.trim() }))
+  .handler(async ({ data, context }) => {
+    const db = await requireAdmin(context);
+    if (!data.note) throw new Error("Escreva a observação.");
+    if (data.id) {
+      const { data: existing } = await db.from("audit_logs").select("action").eq("id", data.id).maybeSingle();
+      if (existing?.action !== "admin.note") throw new Error("Somente observações manuais podem ser alteradas.");
+      const { error } = await db.from("audit_logs").update({ details: { note: data.note } }).eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { ok: true, id: data.id };
+    }
+    const { data: row, error } = await db.from("audit_logs").insert({ user_id: context.userId, action: "admin.note", entity: "audit_logs", details: { note: data.note } }).select("id").single();
+    if (error) throw new Error(error.message);
+    return { ok: true, id: row.id };
   });
