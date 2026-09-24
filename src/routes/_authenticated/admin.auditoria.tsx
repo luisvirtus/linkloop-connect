@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listAudit } from "@/lib/admin.functions";
+import { deleteAdminRecord, listAudit, saveAuditNote } from "@/lib/admin.functions";
 import { dateTimeBR } from "@/lib/format";
 import { useMemo, useState } from "react";
-import { Search, ScrollText } from "lucide-react";
+import { Pencil, Plus, Search, ScrollText, Trash2, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/auditoria")({
   head: () => ({ meta: [
@@ -19,13 +21,21 @@ export const Route = createFileRoute("/_authenticated/admin/auditoria")({
 });
 
 function Audit() {
+  const qc = useQueryClient();
   const fetchAudit = useServerFn(listAudit);
+  const saveNote = useServerFn(saveAuditNote);
+  const remove = useServerFn(deleteAdminRecord);
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "audit"],
     queryFn: () => fetchAudit({ data: {} } as any),
   });
   const [search, setSearch] = useState("");
   const [action, setAction] = useState("all");
+  const [note, setNote] = useState({ id: "", text: "" });
+  const [showNote, setShowNote] = useState(false);
+  const refresh = () => qc.invalidateQueries({ queryKey: ["admin", "audit"] });
+  const noteMutation = useMutation({ mutationFn: () => saveNote({ data: { id: note.id || null, note: note.text } }), onSuccess: () => { toast.success(note.id ? "Observação alterada." : "Observação incluída."); setShowNote(false); setNote({ id: "", text: "" }); refresh(); }, onError: (e: Error) => toast.error(e.message) });
+  const deleteMutation = useMutation({ mutationFn: (id: string) => remove({ data: { entity: "audit_logs", id } }), onSuccess: () => { toast.success("Registro excluído definitivamente."); refresh(); }, onError: (e: Error) => toast.error(e.message) });
   const actions = useMemo(() => Array.from(new Set((data ?? []).map((item: any) => item.action))).sort(), [data]);
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("pt-BR");
@@ -38,11 +48,13 @@ function Audit() {
 
   return (
     <div className="space-y-6">
-      <header>
+      <header className="flex flex-wrap items-end justify-between gap-3"><div>
         <div className="flex items-center gap-2 text-primary"><ScrollText className="h-5 w-5" /><span className="text-sm font-semibold">Rastreabilidade</span></div>
         <h1 className="mt-2 font-display text-2xl font-bold">Auditoria</h1>
         <p className="mt-1 text-sm text-muted-foreground">Acompanhe as ações administrativas e alterações importantes do sistema.</p>
-      </header>
+      </div><Button onClick={() => { setNote({ id: "", text: "" }); setShowNote(true); }}><Plus /> Incluir observação</Button></header>
+
+      {showNote ? <section className="surface-card p-5"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{note.id ? "Alterar observação" : "Nova observação"}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowNote(false)}><X /></Button></div><textarea className="input mt-4 min-h-28" maxLength={1000} placeholder="Descreva a observação administrativa" value={note.text} onChange={e => setNote({ ...note, text: e.target.value })} /><Button className="mt-3" disabled={!note.text.trim() || noteMutation.isPending} onClick={() => noteMutation.mutate()}>{note.id ? "Salvar alteração" : "Incluir observação"}</Button></section> : null}
 
       <div className="surface-card p-5">
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_260px]">
@@ -71,7 +83,7 @@ function Audit() {
               <th>Ação</th>
               <th>Entidade</th>
               <th>ID</th>
-              <th>Detalhes</th>
+              <th>Detalhes</th><th>Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -85,6 +97,7 @@ function Audit() {
                 <td className="pr-5 text-xs">
                   {l.details ? <details><summary className="cursor-pointer font-semibold text-primary">Visualizar</summary><pre className="mt-2 max-w-xs whitespace-pre-wrap rounded-md bg-muted p-3 text-xs">{JSON.stringify(l.details, null, 2)}</pre></details> : "—"}
                 </td>
+                <td className="pr-5"><div className="flex gap-1">{l.action === "admin.note" ? <Button variant="ghost" size="icon" title="Alterar observação" aria-label="Alterar observação" onClick={() => { setNote({ id: l.id, text: String(l.details?.note ?? "") }); setShowNote(true); }}><Pencil /></Button> : null}<Button variant="ghost" size="icon" title="Excluir registro" aria-label="Excluir registro" disabled={deleteMutation.isPending} onClick={() => { if (window.confirm("Excluir este registro definitivamente? Esta ação não poderá ser desfeita.")) deleteMutation.mutate(l.id); }}><Trash2 className="text-destructive" /></Button></div></td>
               </tr>
             ))}
           </tbody>
@@ -106,6 +119,7 @@ const ACTION_LABELS: Record<string, string> = {
   "settings.update": "Configurações alteradas",
   "seller.create": "Vendedor criado",
   "seller.update": "Vendedor alterado",
+  "admin.note": "Observação administrativa",
 };
 
 const ENTITY_LABELS: Record<string, string> = {

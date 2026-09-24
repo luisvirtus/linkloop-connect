@@ -3,8 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { listSellers, saveSeller } from "@/lib/admin.functions";
+import { deleteAdminRecord, listSellers, saveSeller } from "@/lib/admin.functions";
 import { brl } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/vendedores")({
   head: () => ({ meta: [
@@ -22,7 +24,9 @@ function Sellers() {
   const qc = useQueryClient();
   const fetchSellers = useServerFn(listSellers);
   const save = useServerFn(saveSeller);
-  const [form, setForm] = useState({ name: "", email: "", phone: "" });
+  const remove = useServerFn(deleteAdminRecord);
+  const [form, setForm] = useState({ id: "", name: "", email: "", phone: "", active: true });
+  const [showForm, setShowForm] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "sellers"],
@@ -33,29 +37,36 @@ function Sellers() {
     mutationFn: (payload: any) => save({ data: payload }),
     onSuccess: (res) => {
       toast.success(res.linkedUser ? "Vendedor salvo e vinculado ao acesso." : "Vendedor salvo. Ele aparece no painel quando entrar com esse e-mail.");
-      setForm({ name: "", email: "", phone: "" });
+      setForm({ id: "", name: "", email: "", phone: "", active: true });
+      setShowForm(false);
       qc.invalidateQueries({ queryKey: ["admin", "sellers"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => remove({ data: { entity: "sellers", id } }),
+    onSuccess: () => { toast.success("Vendedor excluído definitivamente."); qc.invalidateQueries({ queryKey: ["admin"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const edit = (s: any) => { setForm({ id: s.id, name: s.name, email: s.email ?? "", phone: s.phone ?? "", active: s.active }); setShowForm(true); };
 
   return (
     <div className="space-y-5">
-      <div className="surface-card p-6">
-        <h2 className="font-display text-lg font-bold">Novo vendedor</h2>
+      <div className="flex items-center justify-between"><h1 className="font-display text-2xl font-bold">Vendedores</h1><Button onClick={() => { setForm({ id: "", name: "", email: "", phone: "", active: true }); setShowForm(true); }}><Plus /> Incluir vendedor</Button></div>
+      {showForm ? <div className="surface-card p-6">
+        <div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{form.id ? "Alterar vendedor" : "Novo vendedor"}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowForm(false)}><X /></Button></div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <input className="input" placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input className="input" placeholder="E-mail de acesso" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <input className="input" placeholder="Telefone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <input className="input" maxLength={120} placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          <input className="input" type="email" maxLength={255} placeholder="E-mail de acesso" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <input className="input" inputMode="tel" maxLength={30} placeholder="Telefone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         </div>
-        <button
-          className="mt-4 rounded-full bg-primary px-6 py-2.5 font-semibold text-primary-foreground disabled:opacity-60"
+        <Button className="mt-4"
           disabled={!form.name || saveMutation.isPending}
           onClick={() => saveMutation.mutate(form)}
         >
-          Salvar vendedor
-        </button>
-      </div>
+          {form.id ? "Salvar alterações" : "Incluir vendedor"}
+        </Button>
+      </div> : null}
 
       <div className="surface-card p-6">
         <h2 className="font-display text-lg font-bold">Vendedores</h2>
@@ -69,7 +80,7 @@ function Sellers() {
                 <th>Vendas</th>
                 <th>A receber</th>
                 <th>Pago</th>
-                <th>Situação</th>
+                <th>Situação</th><th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -81,13 +92,13 @@ function Sellers() {
                   <td>{brl(s.pending)}</td>
                   <td>{brl(s.paid)}</td>
                   <td>
-                    <button
-                      className="text-xs font-semibold text-primary"
+                    <Button variant="link" size="sm"
                       onClick={() => saveMutation.mutate({ id: s.id, name: s.name, email: s.email, phone: s.phone, active: !s.active })}
                     >
                       {s.active ? "Ativo" : "Inativo"}
-                    </button>
+                    </Button>
                   </td>
+                  <td><div className="flex gap-1"><Button variant="ghost" size="icon" title="Alterar vendedor" aria-label={`Alterar ${s.name}`} onClick={() => edit(s)}><Pencil /></Button><Button variant="ghost" size="icon" title="Excluir vendedor" aria-label={`Excluir ${s.name}`} disabled={deleteMutation.isPending} onClick={() => { if (window.confirm(`Excluir definitivamente ${s.name}? As comissões vinculadas também serão apagadas.`)) deleteMutation.mutate(s.id); }}><Trash2 className="text-destructive" /></Button></div></td>
                 </tr>
               ))}
             </tbody>

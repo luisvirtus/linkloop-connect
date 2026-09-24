@@ -291,6 +291,29 @@ export const deleteAdminRecord = createServerFn({ method: "POST" })
   .inputValidator((data: { entity: "plates" | "batches" | "companies" | "sellers" | "sales" | "subscriptions" | "payments" | "commissions" | "audit_logs"; id: string }) => data)
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
+    if (data.entity === "companies") {
+      const [{ data: sales }, { data: subs }] = await Promise.all([
+        db.from("sales").select("id").eq("company_id", data.id),
+        db.from("subscriptions").select("id").eq("company_id", data.id),
+      ]);
+      const saleIds = (sales ?? []).map((item: any) => item.id);
+      const subIds = (subs ?? []).map((item: any) => item.id);
+      if (saleIds.length) await db.from("commissions").delete().in("sale_id", saleIds);
+      if (subIds.length) await db.from("commissions").delete().in("subscription_id", subIds);
+      await db.from("payments").delete().eq("company_id", data.id);
+      await db.from("sales").delete().eq("company_id", data.id);
+      await db.from("subscriptions").delete().eq("company_id", data.id);
+      const { data: pages } = await db.from("pages").select("id").eq("company_id", data.id);
+      const pageIds = (pages ?? []).map((item: any) => item.id);
+      if (pageIds.length) await db.from("page_links").delete().in("page_id", pageIds);
+      await db.from("pages").delete().eq("company_id", data.id);
+      await db.from("plates").delete().eq("company_id", data.id);
+    }
+    if (data.entity === "sellers") {
+      await db.from("commissions").delete().eq("seller_id", data.id);
+      await db.from("sales").update({ seller_id: null }).eq("seller_id", data.id);
+      await db.from("plates").update({ seller_id: null }).eq("seller_id", data.id);
+    }
     const { error } = await db.from(data.entity).delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     if (data.entity !== "audit_logs") await audit(db, context.userId, `${data.entity}.delete`, data.entity, data.id);
@@ -353,8 +376,8 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
   .inputValidator((data: { entity: CommercialEntity; id?: string | null; values: Record<string, unknown> }) => data)
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
-    const v = data.values;
-    let payload: Record<string, unknown>;
+    const v: any = data.values;
+    let payload: any;
     if (data.entity === "sales") {
       if (!v.plate_id || !v.company_id) throw new Error("Selecione a empresa e a plaquinha.");
       payload = { plate_id: v.plate_id, company_id: v.company_id, seller_id: v.seller_id || null, amount: Math.max(0, Number(v.amount)), cost: Math.max(0, Number(v.cost)), payment_method: v.payment_method || null, payment_status: v.payment_status, sold_at: v.sold_at };
