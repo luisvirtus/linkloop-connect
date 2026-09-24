@@ -3,8 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
-import { createBatch, listPlates, unlinkPlate, updatePlate } from "@/lib/admin.functions";
+import { createBatch, deleteAdminRecord, listBatches, listPlates, unlinkPlate, updatePlate } from "@/lib/admin.functions";
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
+import { Button } from "@/components/ui/button";
+import { Pencil, Plus, Trash2, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/estoque")({
   head: () => ({ meta: [
@@ -24,18 +26,23 @@ const STATUSES: PlateStatus[] = ["available", "reserved", "sold", "linked", "don
 function Stock() {
   const qc = useQueryClient();
   const fetchPlates = useServerFn(listPlates);
+  const fetchBatches = useServerFn(listBatches);
   const create = useServerFn(createBatch);
   const update = useServerFn(updatePlate);
   const unlink = useServerFn(unlinkPlate);
+  const remove = useServerFn(deleteAdminRecord);
 
   const [status, setStatus] = useState<PlateStatus | "">("");
   const [search, setSearch] = useState("");
   const [batch, setBatch] = useState({ label: "", quantity: 100, size: "medium", unitCost: 0, sellerId: "" });
+  const [showBatch, setShowBatch] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "plates", status, search],
     queryFn: () => fetchPlates({ data: { status: status || null, search: search || null } }),
   });
+  const batches = useQuery({ queryKey: ["admin", "batches"], queryFn: () => fetchBatches({ data: {} } as never) });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin"] });
 
@@ -52,8 +59,14 @@ function Stock() {
       }),
     onSuccess: (res) => {
       toast.success(`${res.codes.length} plaquinhas geradas.`);
+      setShowBatch(false);
       refresh();
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: ({ entity, id }: { entity: "plates" | "batches"; id: string }) => remove({ data: { entity, id } }),
+    onSuccess: () => { toast.success("Registro excluído definitivamente."); refresh(); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -74,8 +87,9 @@ function Stock() {
 
   return (
     <div className="space-y-5">
-      <div className="surface-card p-6">
-        <h2 className="font-display text-lg font-bold">Gerar lote</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="font-display text-2xl font-bold">Estoque</h1><Button onClick={() => setShowBatch(true)}><Plus /> Incluir lote</Button></div>
+      {showBatch ? <div className="surface-card p-6">
+        <div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">Gerar lote</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowBatch(false)}><X /></Button></div>
         <div className="mt-4 grid gap-3 sm:grid-cols-5">
           <input className="input" placeholder="Nome do lote" value={batch.label} onChange={(e) => setBatch({ ...batch, label: e.target.value })} />
           <input className="input" type="number" min={1} value={batch.quantity} onChange={(e) => setBatch({ ...batch, quantity: Number(e.target.value) })} />
@@ -92,14 +106,17 @@ function Stock() {
             ))}
           </select>
         </div>
-        <button
-          className="mt-4 rounded-full bg-primary px-6 py-2.5 font-semibold text-primary-foreground disabled:opacity-60"
+        <Button className="mt-4"
           disabled={batchMutation.isPending}
           onClick={() => batchMutation.mutate()}
         >
           {batchMutation.isPending ? "Gerando..." : "Gerar plaquinhas"}
-        </button>
-      </div>
+        </Button>
+      </div> : null}
+
+      {editing ? <section className="surface-card p-6"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">Alterar plaquinha {editing.qr_code}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setEditing(null)}><X /></Button></div><div className="mt-4 grid gap-3 sm:grid-cols-4"><select className="input" value={editing.status} onChange={e => setEditing({ ...editing, status: e.target.value })}>{STATUSES.map(s => <option key={s} value={s}>{PLATE_STATUS_LABEL[s]}</option>)}</select><select className="input" value={editing.seller_id ?? ""} onChange={e => setEditing({ ...editing, seller_id: e.target.value })}><option value="">Sem vendedor</option>{(data?.sellers ?? []).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</select><input className="input" type="number" min="0" step="0.01" placeholder="Custo" value={editing.cost} onChange={e => setEditing({ ...editing, cost: Number(e.target.value) })} /><input className="input" type="number" min="0" step="0.01" placeholder="Preço" value={editing.price ?? ""} onChange={e => setEditing({ ...editing, price: e.target.value === "" ? null : Number(e.target.value) })} /></div><textarea className="input mt-3 min-h-24" maxLength={1000} placeholder="Observações" value={editing.notes ?? ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} /><Button className="mt-3" disabled={updateMutation.isPending} onClick={() => updateMutation.mutate({ plateId: editing.id, status: editing.status, sellerId: editing.seller_id || null, cost: editing.cost, price: editing.price, notes: editing.notes }, { onSuccess: () => { toast.success("Plaquinha alterada."); setEditing(null); } })}>Salvar alterações</Button></section> : null}
+
+      <section className="surface-card p-6"><h2 className="font-display text-lg font-bold">Lotes</h2>{batches.isLoading ? <p className="mt-3 text-sm text-muted-foreground">Carregando...</p> : <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead className="text-xs uppercase text-muted-foreground"><tr><th className="py-2">Nome</th><th>Quantidade</th><th>Tamanho</th><th>Custo unitário</th><th>Criado</th><th>Ações</th></tr></thead><tbody>{(batches.data ?? []).map((item: any) => <tr key={item.id} className="border-t border-border"><td className="py-3 font-semibold">{item.label}</td><td>{item.quantity}</td><td>{PLATE_SIZE_LABEL[item.size]}</td><td>{brl(item.unit_cost)}</td><td>{dateBR(item.created_at)}</td><td><Button variant="ghost" size="icon" aria-label={`Excluir lote ${item.label}`} title="Excluir lote" onClick={() => { if (window.confirm(`Excluir definitivamente o lote ${item.label}? As plaquinhas serão mantidas sem lote.`)) deleteMutation.mutate({ entity: "batches", id: item.id }); }}><Trash2 className="text-destructive" /></Button></td></tr>)}</tbody></table></div>}</section>
 
       <div className="surface-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -168,6 +185,7 @@ function Stock() {
                   <td>{brl(p.cost)}</td>
                   <td>{dateBR(p.generated_at)}</td>
                   <td className="space-x-2 whitespace-nowrap">
+                    <Button variant="ghost" size="icon" title="Alterar plaquinha" aria-label={`Alterar ${p.qr_code}`} onClick={() => setEditing(p)}><Pencil /></Button>
                     <button
                       className="text-xs font-semibold text-primary"
                       onClick={() => updateMutation.mutate({ plateId: p.id, blockedByAdmin: !p.blocked_by_admin })}
@@ -179,6 +197,7 @@ function Stock() {
                         Desvincular
                       </button>
                     ) : null}
+                    <Button variant="ghost" size="icon" title="Excluir plaquinha" aria-label={`Excluir ${p.qr_code}`} onClick={() => { if (window.confirm(`Excluir definitivamente a plaquinha ${p.qr_code}? A página e a venda vinculadas também serão apagadas.`)) deleteMutation.mutate({ entity: "plates", id: p.id }); }}><Trash2 className="text-destructive" /></Button>
                   </td>
                 </tr>
               ))}
