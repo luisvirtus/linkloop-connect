@@ -376,8 +376,8 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
   .inputValidator((data: { entity: CommercialEntity; id?: string | null; values: Record<string, unknown> }) => data)
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
-    const v = data.values;
-    let payload: Record<string, unknown>;
+    const v: any = data.values;
+    let payload: any;
     if (data.entity === "sales") {
       if (!v.plate_id || !v.company_id) throw new Error("Selecione a empresa e a plaquinha.");
       payload = { plate_id: v.plate_id, company_id: v.company_id, seller_id: v.seller_id || null, amount: Math.max(0, Number(v.amount)), cost: Math.max(0, Number(v.cost)), payment_method: v.payment_method || null, payment_status: v.payment_status, sold_at: v.sold_at };

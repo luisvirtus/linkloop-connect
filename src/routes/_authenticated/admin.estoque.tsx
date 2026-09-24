@@ -186,16 +186,15 @@ function Stock() {
                   <td>{dateBR(p.generated_at)}</td>
                   <td className="space-x-2 whitespace-nowrap">
                     <Button variant="ghost" size="icon" title="Alterar plaquinha" aria-label={`Alterar ${p.qr_code}`} onClick={() => setEditing(p)}><Pencil /></Button>
-                    <button
-                      className="text-xs font-semibold text-primary"
+                    <Button variant="link" size="sm"
                       onClick={() => updateMutation.mutate({ plateId: p.id, blockedByAdmin: !p.blocked_by_admin })}
                     >
                       {p.blocked_by_admin ? "Desbloquear" : "Bloquear"}
-                    </button>
+                    </Button>
                     {p.company_id ? (
-                      <button className="text-xs font-semibold text-destructive" onClick={() => unlinkMutation.mutate(p.id)}>
+                      <Button variant="link" size="sm" className="text-destructive" onClick={() => unlinkMutation.mutate(p.id)}>
                         Desvincular
-                      </button>
+                      </Button>
                     ) : null}
                     <Button variant="ghost" size="icon" title="Excluir plaquinha" aria-label={`Excluir ${p.qr_code}`} onClick={() => { if (window.confirm(`Excluir definitivamente a plaquinha ${p.qr_code}? A página e a venda vinculadas também serão apagadas.`)) deleteMutation.mutate({ entity: "plates", id: p.id }); }}><Trash2 className="text-destructive" /></Button>
                   </td>
