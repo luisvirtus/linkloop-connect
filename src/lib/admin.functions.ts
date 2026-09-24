@@ -291,6 +291,29 @@ export const deleteAdminRecord = createServerFn({ method: "POST" })
   .inputValidator((data: { entity: "plates" | "batches" | "companies" | "sellers" | "sales" | "subscriptions" | "payments" | "commissions" | "audit_logs"; id: string }) => data)
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
+    if (data.entity === "companies") {
+      const [{ data: sales }, { data: subs }] = await Promise.all([
+        db.from("sales").select("id").eq("company_id", data.id),
+        db.from("subscriptions").select("id").eq("company_id", data.id),
+      ]);
+      const saleIds = (sales ?? []).map((item: any) => item.id);
+      const subIds = (subs ?? []).map((item: any) => item.id);
+      if (saleIds.length) await db.from("commissions").delete().in("sale_id", saleIds);
+      if (subIds.length) await db.from("commissions").delete().in("subscription_id", subIds);
+      await db.from("payments").delete().eq("company_id", data.id);
+      await db.from("sales").delete().eq("company_id", data.id);
+      await db.from("subscriptions").delete().eq("company_id", data.id);
+      const { data: pages } = await db.from("pages").select("id").eq("company_id", data.id);
+      const pageIds = (pages ?? []).map((item: any) => item.id);
+      if (pageIds.length) await db.from("page_links").delete().in("page_id", pageIds);
+      await db.from("pages").delete().eq("company_id", data.id);
+      await db.from("plates").delete().eq("company_id", data.id);
+    }
+    if (data.entity === "sellers") {
+      await db.from("commissions").delete().eq("seller_id", data.id);
+      await db.from("sales").update({ seller_id: null }).eq("seller_id", data.id);
+      await db.from("plates").update({ seller_id: null }).eq("seller_id", data.id);
+    }
     const { error } = await db.from(data.entity).delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     if (data.entity !== "audit_logs") await audit(db, context.userId, `${data.entity}.delete`, data.entity, data.id);
