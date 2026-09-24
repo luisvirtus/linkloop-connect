@@ -3,9 +3,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { getSettings, saveSettings } from "@/lib/admin.functions";
+import { getSettings, resetSettings, saveSettings } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
-import { BadgePercent, CircleDollarSign, Save, Settings2 } from "lucide-react";
+import { BadgePercent, CircleDollarSign, RotateCcw, Save, Settings2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
   head: () => ({ meta: [
@@ -23,6 +23,7 @@ function Config() {
   const qc = useQueryClient();
   const fetchSettings = useServerFn(getSettings);
   const save = useServerFn(saveSettings);
+  const reset = useServerFn(resetSettings);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "settings"],
@@ -64,6 +65,7 @@ function Config() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  const resetMutation = useMutation({ mutationFn: () => reset({ data: {} } as never), onSuccess: () => { toast.success("Configurações padrão restauradas."); qc.invalidateQueries({ queryKey: ["admin"] }); }, onError: (e: Error) => toast.error(e.message) });
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando configurações...</p>;
   if (error) return <p className="text-sm text-destructive">Não foi possível carregar as configurações.</p>;
@@ -110,7 +112,8 @@ function Config() {
         </div>
       </section>
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-3">
+        <Button variant="outline" size="lg" disabled={resetMutation.isPending} onClick={() => { if (window.confirm("Restaurar os valores padrão? Os valores atuais serão substituídos.")) resetMutation.mutate(); }}><RotateCcw /> Restaurar padrões</Button>
         <Button
           size="lg"
           onClick={() => saveMutation.mutate()}
