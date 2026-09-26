@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type ComponentType } from "react";
-import { ExternalLink, Globe, Link2, Mail, MapPin, Phone, QrCode, Star } from "lucide-react";
+import { ArrowRight, ExternalLink, Globe, Link2, Mail, MapPin, Phone, QrCode, Star } from "lucide-react";
 import {
   FaFacebookF,
   FaInstagram,
@@ -85,27 +85,30 @@ function ChannelLink({ href, label, kind }: { href: string; label: string; kind:
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="group flex min-h-14 w-full items-center gap-4 rounded-lg border border-border bg-card px-4 py-3 text-left font-semibold shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-google-blue/30 hover:shadow-soft motion-reduce:transform-none"
+      aria-label={`Abrir ${label}`}
+      className="group flex min-h-16 w-full items-center gap-4 rounded-lg border border-border bg-card px-4 py-3 text-left font-semibold text-card-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-google-blue/30 hover:shadow-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transform-none"
     >
       <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
         <Icon className={`h-5 w-5 ${channel.color}`} aria-hidden="true" />
       </span>
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="min-w-0 flex-1 break-words">{label}</span>
       <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-google-blue" aria-hidden="true" />
     </a>
   );
 }
 
-function Message({ title, text }: { title: string; text: string }) {
+function Message({ title, text, code }: { title: string; text: string; code?: string }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-5">
-      <div className="surface-card max-w-sm p-8 text-center">
-        <QrCode className="mx-auto h-9 w-9 text-primary" />
-        <h1 className="mt-4 font-display text-xl font-bold">{title}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{text}</p>
-        <Link to="/" className="mt-6 inline-block text-sm font-semibold text-primary">
-          Ir para o início
-        </Link>
+    <main className="flex min-h-screen items-center justify-center bg-background px-5 py-8">
+      <div className="w-full max-w-sm text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-lg bg-muted"><QrCode className="h-8 w-8 text-primary" aria-hidden="true" /></div>
+        <h1 className="mt-6 font-display text-2xl font-semibold">{title}</h1>
+        <p className="mt-3 text-base leading-relaxed text-muted-foreground">{text}</p>
+        {code ? (
+          <Link to="/entrar" search={{ next: "/painel", code }} className="mt-7 inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
+            Ativar minha plaquinha <ArrowRight className="h-5 w-5" aria-hidden="true" />
+          </Link>
+        ) : null}
       </div>
     </main>
   );
@@ -113,6 +116,7 @@ function Message({ title, text }: { title: string; text: string }) {
 
 function PublicPage() {
   const page = Route.useLoaderData();
+  const { code } = Route.useParams();
 
   if (page.state === "notfound")
     return <Message title="Plaquinha não encontrada" text="Confira o código do QR." />;
@@ -120,7 +124,8 @@ function PublicPage() {
     return (
       <Message
         title="Plaquinha ainda não ativada"
-        text="Entre no sistema com a sua conta Google para vincular esta plaquinha à sua empresa."
+        text="Esta plaquinha ainda não está vinculada a uma empresa. Se ela é sua, ative-a para configurar sua página."
+        code={code}
       />
     );
   if (page.state === "blocked")
@@ -128,25 +133,27 @@ function PublicPage() {
 
   const expired = page.state === "expired";
 
+  const showWebsite = page.websiteUrl && !page.links.some((link) => link.kind === "website" && link.url === page.websiteUrl);
+
   return (
-    <main className="flex min-h-screen items-start justify-center bg-muted/55 px-4 py-6 sm:items-center sm:py-10">
-      <div className="w-full max-w-md overflow-hidden rounded-xl border border-border bg-card shadow-lift">
+    <main className="min-h-screen bg-card sm:flex sm:items-center sm:justify-center sm:bg-muted/55 sm:px-4 sm:py-10">
+      <div className="w-full bg-card sm:max-w-md sm:overflow-hidden sm:rounded-lg sm:border sm:border-border sm:shadow-lift">
         <MulticolorRule />
-        <div className="px-5 pb-7 pt-8 sm:px-8 sm:pt-10">
+        <div className="mx-auto max-w-md px-5 pb-7 pt-8 sm:px-8 sm:pt-10">
           <header className="text-center">
             {page.logoUrl ? (
               <img
                 src={page.logoUrl}
                 alt={page.companyName ?? "Logo"}
-                className="mx-auto h-20 w-20 rounded-lg border border-border object-cover shadow-sm"
+                className="mx-auto h-20 w-20 rounded-lg border border-border object-contain shadow-sm"
               />
             ) : (
               <div className="google-dots mx-auto flex h-20 w-20 items-center justify-center rounded-lg border border-border bg-card shadow-sm">
                 <QrCode className="h-9 w-9 text-google-blue" />
               </div>
             )}
-            <h1 className="mt-5 font-display text-2xl font-semibold text-card-foreground">{page.title ?? page.companyName}</h1>
-            {page.subtitle ? <p className="mt-1.5 text-sm text-muted-foreground">{page.subtitle}</p> : null}
+             <h1 className="mt-5 break-words font-display text-2xl font-semibold text-card-foreground">{page.companyName ?? page.title}</h1>
+             {page.subtitle ? <p className="mt-1.5 break-words text-sm leading-relaxed text-muted-foreground">{page.subtitle}</p> : null}
           </header>
 
           {!expired && page.googleReviewUrl ? (
@@ -154,36 +161,37 @@ function PublicPage() {
               <div className="flex justify-center gap-1.5 text-google-yellow" aria-label="Cinco estrelas">
                 {Array.from({ length: 5 }, (_, index) => <Star key={index} className="h-7 w-7 fill-current" />)}
               </div>
-              <h2 id="review-title" className="mt-3 font-display text-lg font-semibold">Sua opinião faz a diferença</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Compartilhe sua experiência no Google.</p>
+               <h2 id="review-title" className="mt-3 font-display text-lg font-semibold">Como foi sua experiência?</h2>
+               <p className="mt-1 text-sm text-muted-foreground">Conte para outras pessoas no Google.</p>
               <a
                 href={page.googleReviewUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-5 flex min-h-14 w-full items-center justify-center gap-2 rounded-lg bg-google-blue px-6 py-3.5 text-base font-semibold text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-soft motion-reduce:transform-none"
+                 className="mt-5 flex min-h-16 w-full items-center justify-center gap-2 rounded-lg bg-google-blue px-6 py-3.5 text-base font-semibold text-primary-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transform-none"
               >
                 <Star className="h-5 w-5" />
                 Avalie-nos no Google
               </a>
-              <p className="mt-3 text-xs font-medium uppercase text-muted-foreground">Leva apenas alguns segundos</p>
+               <p className="mt-3 text-xs text-muted-foreground">Você será levado ao Google para escrever sua avaliação.</p>
             </section>
           ) : null}
 
-          {page.websiteUrl || page.links.length > 0 ? (
+           {showWebsite || page.links.length > 0 ? (
             <section className="mt-8 border-t border-border pt-6" aria-labelledby="channels-title">
-              <h2 id="channels-title" className="mb-3 text-left text-xs font-semibold uppercase text-muted-foreground">Nossos canais</h2>
+               <h2 id="channels-title" className="mb-3 text-left text-sm font-semibold text-card-foreground">Fale com {page.companyName ?? "a empresa"}</h2>
               <div className="space-y-3">
-                {page.websiteUrl ? (
+                 {showWebsite && page.websiteUrl ? (
                   <a
                     href={page.websiteUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex min-h-14 w-full items-center gap-4 rounded-lg border border-border bg-card px-4 py-3 text-left font-semibold shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-google-blue/30 hover:shadow-soft motion-reduce:transform-none"
+                     aria-label="Abrir site oficial"
+                     className="group flex min-h-16 w-full items-center gap-4 rounded-lg border border-border bg-card px-4 py-3 text-left font-semibold text-card-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-google-blue/30 hover:shadow-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transform-none"
                   >
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
                       <WebsiteIcon url={page.websiteUrl} />
                     </span>
-                    <span className="min-w-0 flex-1 truncate">Site oficial</span>
+                     <span className="min-w-0 flex-1">Site oficial</span>
                     <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-google-blue" aria-hidden="true" />
                   </a>
                 ) : null}
@@ -192,7 +200,7 @@ function PublicPage() {
             </section>
           ) : null}
 
-          <p className="mt-7 text-center text-xs text-muted-foreground">Plaquinhas QR</p>
+           <p className="mt-7 text-center text-xs text-muted-foreground">Plaquinhas QR</p>
         </div>
         <MulticolorRule muted />
       </div>
