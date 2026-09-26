@@ -3,7 +3,7 @@
 - [x] Backend: banco, papéis, RLS, auditoria, configurações
 - [x] Login Google + vinculação da plaquinha
 - [x] Página pública `/q/CODIGO` + editor de links + bloqueio
-- [ ] Melhorar experiência de quem escaneia: leitura mobile, avaliação, contatos e ativação de plaquinha nova
+- [x] Melhorar experiência de quem escaneia: leitura mobile, avaliação, contatos e ativação de plaquinha nova
 - [x] Estoque, lotes, geração de QR e artes de impressão
 - [ ] Assinatura (12 meses após vínculo) + Stripe/webhooks
 - [x] Vendas, vendedores, comissões, financeiro
