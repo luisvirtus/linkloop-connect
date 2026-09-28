@@ -210,11 +210,64 @@
 
 @media print {
   @page { size: A4; margin: 8mm; }
-  body { background: white; }
+  body { background: var(--card); }
   header, .print-controls { display: none !important; }
   .print-sheet { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6mm; }
   .plate-art { color: black; border-color: black; box-shadow: none; page-break-inside: avoid; }
   .plate-art-small { width: 100mm; min-height: 100mm; }
   .plate-art-medium { width: 150mm; min-height: 150mm; grid-column: 1 / -1; margin-inline: auto; }
   .plate-art-large { width: 190mm; min-height: 190mm; grid-column: 1 / -1; margin-inline: auto; }
+}
+
+/* The artwork keeps the same geometry at preview and at its physical print size. */
+.plate-print-art {
+  position: relative;
+  isolation: isolate;
+  container-type: inline-size;
+  width: min(100%, 560px);
+  aspect-ratio: 1;
+  margin-inline: auto;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+}
+.plate-print-corner { position: absolute; width: 22%; height: 22%; border-radius: 50%; pointer-events: none; }
+.corner-blue { top: -9%; left: -9%; background: var(--google-blue); }
+.corner-yellow { top: -9%; right: -9%; background: var(--google-yellow); }
+.corner-green { bottom: -9%; left: -9%; background: var(--google-green); }
+.corner-red { bottom: -9%; right: -9%; background: var(--google-red); }
+.plate-print-content { position: absolute; inset: 3% 5% 3%; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.plate-print-google-mark { width: 10%; height: 10%; flex: none; }
+.plate-print-heading { margin-top: 0.5%; font-size: 5.1cqw; font-weight: 800; line-height: 1.15; }
+.plate-print-google-word { display: flex; align-items: center; font-family: var(--font-display); font-size: 14.5cqw; line-height: 0.98; font-weight: 650; }
+.plate-print-google-word span:nth-child(1), .plate-print-google-word span:nth-child(4) { color: var(--google-blue); }
+.plate-print-google-word span:nth-child(2), .plate-print-google-word span:nth-child(6) { color: var(--google-red); }
+.plate-print-google-word span:nth-child(3) { color: var(--google-yellow); }
+.plate-print-google-word span:nth-child(5) { color: var(--google-green); }
+.plate-print-stars { display: flex; gap: 1cqw; margin-top: 1.2%; color: var(--google-yellow); }
+.plate-print-stars svg { width: 5.8cqw; height: 5.8cqw; }
+.plate-print-center { display: flex; align-items: center; justify-content: center; gap: 2.5%; width: 100%; flex: 1; min-height: 0; }
+.plate-print-qr { display: flex; align-items: center; justify-content: center; width: 38%; aspect-ratio: 1; border: 0.6cqw solid var(--foreground); border-radius: 2.5cqw; background: var(--card); padding: 1%; font-size: 2.5cqw; }
+.plate-print-qr img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.plate-print-scan { display: flex; flex-direction: column; align-items: center; width: 31%; font-size: 3.1cqw; font-weight: 650; line-height: 1.15; }
+.plate-print-scan svg { width: 9cqw; height: 9cqw; transform: rotate(30deg); }
+.plate-print-benefits { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; margin-bottom: 3%; }
+.plate-print-benefits > div { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8cqw; min-height: 12cqw; font-size: 2.7cqw; font-weight: 650; line-height: 1.08; }
+.plate-print-benefits > div + div { border-left: 1px solid var(--foreground); }
+.plate-print-benefits svg { width: 5cqw; height: 5cqw; }
+.plate-print-business { display: flex; align-items: center; justify-content: center; gap: 2cqw; width: 78%; min-height: 8%; padding: 1% 3%; border-radius: 999px; background: var(--accent); font-size: 3cqw; font-weight: 650; line-height: 1.05; }
+.plate-print-business svg { flex: none; width: 4cqw; height: 4cqw; }
+.plate-print-business span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+
+@media print {
+  @page plateSmall { size: 100mm 100mm; margin: 0; }
+  @page plateMedium { size: 150mm 150mm; margin: 0; }
+  @page plateLarge { size: 200mm 200mm; margin: 0; }
+  .print-page { min-height: 0 !important; padding: 0 !important; background: var(--card); }
+  .print-preview { max-width: none !important; }
+  .print-page .plate-print-art { margin: 0; border: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; break-inside: avoid; }
+  .print-page .plate-print-small { width: 100mm; page: plateSmall; }
+  .print-page .plate-print-medium { width: 150mm; page: plateMedium; }
+  .print-page .plate-print-large { width: 200mm; page: plateLarge; }
 }
