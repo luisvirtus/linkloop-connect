@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { BadgeDollarSign } from "lucide-react";
+import { BadgeDollarSign, Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { getSellerDashboard } from "@/lib/seller.functions";
 import { brl, dateBR, PLATE_STATUS_LABEL } from "@/lib/format";
 
@@ -82,7 +83,7 @@ function SellerPanel() {
                 {(data.plates ?? []).map((p: any) => (
                   <div key={p.id} className="flex items-center justify-between rounded-xl border border-border p-3">
                     <span className="font-semibold">{p.qr_code}</span>
-                    <span className="text-muted-foreground">{PLATE_STATUS_LABEL[p.status] ?? p.status}</span>
+                    <div className="flex items-center gap-3"><span className="text-muted-foreground">{PLATE_STATUS_LABEL[p.status] ?? p.status}</span><Button asChild size="sm" variant="outline"><Link to="/imprimir/$plateId" params={{ plateId: p.id }}><Printer /> Imprimir</Link></Button></div>
                   </div>
                 ))}
                 {(data.plates ?? []).length === 0 ? <p className="text-muted-foreground">Nenhuma plaquinha atribuída.</p> : null}

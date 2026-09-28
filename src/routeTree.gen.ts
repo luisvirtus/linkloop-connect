@@ -24,6 +24,7 @@ import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminEstoqueRouteImport } from './routes/_authenticated/admin.estoque'
 import { Route as AuthenticatedAdminImpressaoRouteImport } from './routes/_authenticated/admin.impressao'
 import { Route as AuthenticatedAdminVendedoresRouteImport } from './routes/_authenticated/admin.vendedores'
+import { Route as AuthenticatedImprimirPlateIdRouteImport } from './routes/_authenticated/imprimir.$plateId'
 import { Route as AuthenticatedAdminClienteCompanyIdRouteImport } from './routes/_authenticated/admin.cliente.$companyId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -107,6 +108,12 @@ const AuthenticatedAdminVendedoresRoute =
     path: '/vendedores',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedImprimirPlateIdRoute =
+  AuthenticatedImprimirPlateIdRouteImport.update({
+    id: '/imprimir/$plateId',
+    path: '/imprimir/$plateId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminClienteCompanyIdRoute =
   AuthenticatedAdminClienteCompanyIdRouteImport.update({
     id: '/cliente/$companyId',
@@ -128,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/admin/impressao': typeof AuthenticatedAdminImpressaoRoute
   '/admin/vendedores': typeof AuthenticatedAdminVendedoresRoute
+  '/imprimir/$plateId': typeof AuthenticatedImprimirPlateIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/cliente/$companyId': typeof AuthenticatedAdminClienteCompanyIdRoute
 }
@@ -144,6 +152,7 @@ export interface FileRoutesByTo {
   '/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/admin/impressao': typeof AuthenticatedAdminImpressaoRoute
   '/admin/vendedores': typeof AuthenticatedAdminVendedoresRoute
+  '/imprimir/$plateId': typeof AuthenticatedImprimirPlateIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/cliente/$companyId': typeof AuthenticatedAdminClienteCompanyIdRoute
 }
@@ -163,6 +172,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/estoque': typeof AuthenticatedAdminEstoqueRoute
   '/_authenticated/admin/impressao': typeof AuthenticatedAdminImpressaoRoute
   '/_authenticated/admin/vendedores': typeof AuthenticatedAdminVendedoresRoute
+  '/_authenticated/imprimir/$plateId': typeof AuthenticatedImprimirPlateIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/cliente/$companyId': typeof AuthenticatedAdminClienteCompanyIdRoute
 }
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/admin/estoque'
     | '/admin/impressao'
     | '/admin/vendedores'
+    | '/imprimir/$plateId'
     | '/admin/'
     | '/admin/cliente/$companyId'
   fileRoutesByTo: FileRoutesByTo
@@ -198,6 +209,7 @@ export interface FileRouteTypes {
     | '/admin/estoque'
     | '/admin/impressao'
     | '/admin/vendedores'
+    | '/imprimir/$plateId'
     | '/admin'
     | '/admin/cliente/$companyId'
   id:
@@ -216,6 +228,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/estoque'
     | '/_authenticated/admin/impressao'
     | '/_authenticated/admin/vendedores'
+    | '/_authenticated/imprimir/$plateId'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/cliente/$companyId'
   fileRoutesById: FileRoutesById
@@ -334,6 +347,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminVendedoresRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/imprimir/$plateId': {
+      id: '/_authenticated/imprimir/$plateId'
+      path: '/imprimir/$plateId'
+      fullPath: '/imprimir/$plateId'
+      preLoaderRoute: typeof AuthenticatedImprimirPlateIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/cliente/$companyId': {
       id: '/_authenticated/admin/cliente/$companyId'
       path: '/cliente/$companyId'
@@ -376,12 +396,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedPainelRoute: typeof AuthenticatedPainelRoute
   AuthenticatedVendedorRoute: typeof AuthenticatedVendedorRoute
+  AuthenticatedImprimirPlateIdRoute: typeof AuthenticatedImprimirPlateIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedPainelRoute: AuthenticatedPainelRoute,
   AuthenticatedVendedorRoute: AuthenticatedVendedorRoute,
+  AuthenticatedImprimirPlateIdRoute: AuthenticatedImprimirPlateIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
