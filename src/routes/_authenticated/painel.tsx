@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Lock, LogOut, QrCode, Star, Trash2, Unlock } from "lucide-react";
+import { Lock, LogOut, Printer, QrCode, Star, Trash2, Unlock } from "lucide-react";
 import { getAccount, getPlateByCode, linkPlate } from "@/lib/account.functions";
 import { savePage, saveLink, deleteLink, setPlateBlock, requestRenewal } from "@/lib/page.functions";
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
@@ -345,6 +345,7 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
                 <a href={`/q/${p.qr_code}`} target="_blank" rel="noreferrer" className="text-sm font-semibold text-primary">
                   Ver página
                 </a>
+                 <Button asChild variant="outline" size="sm" title={`Imprimir ${p.qr_code}`}><Link to="/imprimir/$plateId" params={{ plateId: p.id }}><Printer /> Imprimir</Link></Button>
                 <button
                   className="flex items-center gap-1 rounded-full border border-border px-4 py-2 text-sm font-semibold"
                   onClick={() => blockMutation.mutate({ plateId: p.id, blocked: !p.blocked_by_client })}
