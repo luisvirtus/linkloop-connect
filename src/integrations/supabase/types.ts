@@ -85,6 +85,7 @@ export type Database = {
           id: string
           kind: Database["public"]["Enums"]["commission_kind"]
           paid_at: string | null
+          payment_id: string | null
           percent: number
           sale_id: string | null
           seller_id: string
@@ -98,6 +99,7 @@ export type Database = {
           id?: string
           kind: Database["public"]["Enums"]["commission_kind"]
           paid_at?: string | null
+          payment_id?: string | null
           percent?: number
           sale_id?: string | null
           seller_id: string
@@ -111,6 +113,7 @@ export type Database = {
           id?: string
           kind?: Database["public"]["Enums"]["commission_kind"]
           paid_at?: string | null
+          payment_id?: string | null
           percent?: number
           sale_id?: string | null
           seller_id?: string
@@ -118,6 +121,13 @@ export type Database = {
           subscription_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "commissions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "commissions_sale_id_fkey"
             columns: ["sale_id"]
