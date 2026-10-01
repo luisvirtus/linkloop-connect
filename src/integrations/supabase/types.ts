@@ -568,6 +568,7 @@ export type Database = {
           expires_at: string
           id: string
           plate_id: string | null
+          seller_id: string | null
           starts_at: string
           status: Database["public"]["Enums"]["subscription_status"]
           stripe_reference: string | null
@@ -580,6 +581,7 @@ export type Database = {
           expires_at: string
           id?: string
           plate_id?: string | null
+          seller_id?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_reference?: string | null
@@ -592,6 +594,7 @@ export type Database = {
           expires_at?: string
           id?: string
           plate_id?: string | null
+          seller_id?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_reference?: string | null
@@ -610,6 +613,13 @@ export type Database = {
             columns: ["plate_id"]
             isOneToOne: false
             referencedRelation: "plates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
         ]
