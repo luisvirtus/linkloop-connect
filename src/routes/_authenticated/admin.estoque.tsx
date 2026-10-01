@@ -90,22 +90,23 @@ function Stock() {
       <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="font-display text-2xl font-bold">Estoque</h1><Button onClick={() => setShowBatch(true)}><Plus /> Incluir lote</Button></div>
       {showBatch ? <div className="surface-card p-6">
         <div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">Gerar lote</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowBatch(false)}><X /></Button></div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-5">
-          <input className="input" placeholder="Nome do lote" value={batch.label} onChange={(e) => setBatch({ ...batch, label: e.target.value })} />
-          <input className="input" type="number" min={1} value={batch.quantity} onChange={(e) => setBatch({ ...batch, quantity: Number(e.target.value) })} />
-          <select className="input" value={batch.size} onChange={(e) => setBatch({ ...batch, size: e.target.value })}>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <Field label="Nome do lote"><input className="input" maxLength={100} placeholder="Ex.: Produção outubro" value={batch.label} onChange={(e) => setBatch({ ...batch, label: e.target.value })} /></Field>
+          <Field label="Quantidade"><input className="input" type="number" min={1} max={2000} value={batch.quantity} onChange={(e) => setBatch({ ...batch, quantity: Number(e.target.value) })} /></Field>
+          <Field label="Tamanho"><select className="input" value={batch.size} onChange={(e) => setBatch({ ...batch, size: e.target.value })}>
             <option value="small">Pequena 10x10</option>
             <option value="medium">Média 15x15</option>
             <option value="large">Grande 20x20</option>
-          </select>
-          <input className="input" type="number" step="0.01" placeholder="Custo unitário" value={batch.unitCost} onChange={(e) => setBatch({ ...batch, unitCost: Number(e.target.value) })} />
-          <select className="input" value={batch.sellerId} onChange={(e) => setBatch({ ...batch, sellerId: e.target.value })}>
+          </select></Field>
+          <Field label="Custo unitário"><input className="input" type="number" min={0} step="0.01" placeholder="R$ 0,00" value={batch.unitCost} onChange={(e) => setBatch({ ...batch, unitCost: Number(e.target.value) })} /></Field>
+          <Field label="Vendedor responsável"><select className="input" value={batch.sellerId} onChange={(e) => setBatch({ ...batch, sellerId: e.target.value })}>
             <option value="">Sem vendedor</option>
             {(data?.sellers ?? []).map((s: any) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
-          </select>
+          </select></Field>
         </div>
+        <p className="mt-3 text-xs text-muted-foreground">O vendedor selecionado será atribuído a todas as plaquinhas deste lote e ficará vinculado à comissão quando elas forem vendidas.</p>
         <Button className="mt-4"
           disabled={batchMutation.isPending}
           onClick={() => batchMutation.mutate()}
@@ -207,4 +208,8 @@ function Stock() {
       </div>
     </div>
   );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return <label className="grid gap-1.5 text-sm font-semibold"><span>{label}</span>{children}</label>;
 }

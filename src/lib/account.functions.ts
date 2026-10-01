@@ -251,6 +251,7 @@ export const linkPlate = createServerFn({ method: "POST" })
       .insert({
         company_id: company!.id,
         plate_id: plate.id,
+        seller_id: plate.seller_id,
         starts_at: now.toISOString(),
         expires_at: expires.toISOString(),
         amount: subscriptionPrice,

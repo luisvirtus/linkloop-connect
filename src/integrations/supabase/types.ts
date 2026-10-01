@@ -85,6 +85,7 @@ export type Database = {
           id: string
           kind: Database["public"]["Enums"]["commission_kind"]
           paid_at: string | null
+          payment_id: string | null
           percent: number
           sale_id: string | null
           seller_id: string
@@ -98,6 +99,7 @@ export type Database = {
           id?: string
           kind: Database["public"]["Enums"]["commission_kind"]
           paid_at?: string | null
+          payment_id?: string | null
           percent?: number
           sale_id?: string | null
           seller_id: string
@@ -111,6 +113,7 @@ export type Database = {
           id?: string
           kind?: Database["public"]["Enums"]["commission_kind"]
           paid_at?: string | null
+          payment_id?: string | null
           percent?: number
           sale_id?: string | null
           seller_id?: string
@@ -118,6 +121,13 @@ export type Database = {
           subscription_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "commissions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "commissions_sale_id_fkey"
             columns: ["sale_id"]
@@ -568,6 +578,7 @@ export type Database = {
           expires_at: string
           id: string
           plate_id: string | null
+          seller_id: string | null
           starts_at: string
           status: Database["public"]["Enums"]["subscription_status"]
           stripe_reference: string | null
@@ -580,6 +591,7 @@ export type Database = {
           expires_at: string
           id?: string
           plate_id?: string | null
+          seller_id?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_reference?: string | null
@@ -592,6 +604,7 @@ export type Database = {
           expires_at?: string
           id?: string
           plate_id?: string | null
+          seller_id?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["subscription_status"]
           stripe_reference?: string | null
@@ -610,6 +623,13 @@ export type Database = {
             columns: ["plate_id"]
             isOneToOne: false
             referencedRelation: "plates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "sellers"
             referencedColumns: ["id"]
           },
         ]
@@ -640,6 +660,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_admin_payment: {
+        Args: { _payment_id: string; _user_id: string }
+        Returns: Json
+      }
       current_seller_id: { Args: never; Returns: string }
       has_role: {
         Args: {

@@ -11,3 +11,4 @@
 - [x] Painel admin completo, "entrar como cliente", auditoria
 - [x] Refinar Comercial, Configurações, Auditoria e acesso como cliente
 - [x] CRUD administrativo: Estoque, Clientes, Vendedores, Comercial, Configurações e Auditoria
+- [x] Pagamentos claros, campos identificados nos lotes e vendedor preservado nas renovações

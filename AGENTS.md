@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - A impressão individual usa uma rota autenticada e um server function com RLS e verificação explícita de posse/atribuição/papel; o QR permanece apontando para `/q/CÓDIGO` para evitar exposição de placas por ID e reimpressões quando links mudam.
+- A assinatura preserva o vendedor da venda original em vínculo próprio; toda comissão de renovação usa esse vínculo imutável, nunca uma busca atual nas plaquinhas.

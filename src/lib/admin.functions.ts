@@ -256,8 +256,8 @@ export const listAdminOptions = createServerFn({ method: "POST" })
       db.from("profiles").select("id, email, full_name").order("email"),
       db.from("plates").select("id, qr_code, company_id").order("serial"),
       db.from("sellers").select("id, name").order("name"),
-      db.from("subscriptions").select("id, company_id, expires_at").order("expires_at", { ascending: false }),
-      db.from("sales").select("id, company_id, plate_id, amount").order("sold_at", { ascending: false }),
+      db.from("subscriptions").select("id, company_id, plate_id, seller_id, expires_at").order("expires_at", { ascending: false }),
+      db.from("sales").select("id, company_id, plate_id, seller_id, amount, sold_at").order("sold_at", { ascending: false }),
     ]);
     return { companies: companies ?? [], profiles: profiles ?? [], plates: plates ?? [], sellers: sellers ?? [], subscriptions: subscriptions ?? [], sales: sales ?? [] };
   });
@@ -383,9 +383,15 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
       payload = { plate_id: v.plate_id, company_id: v.company_id, seller_id: v.seller_id || null, amount: Math.max(0, Number(v.amount)), cost: Math.max(0, Number(v.cost)), payment_method: v.payment_method || null, payment_status: v.payment_status, sold_at: v.sold_at };
     } else if (data.entity === "subscriptions") {
       if (!v.company_id || !v.expires_at) throw new Error("Selecione a empresa e informe o vencimento.");
-      payload = { company_id: v.company_id, plate_id: v.plate_id || null, starts_at: v.starts_at, expires_at: v.expires_at, amount: Math.max(0, Number(v.amount)), status: v.status };
+      payload = { company_id: v.company_id, plate_id: v.plate_id || null, seller_id: v.seller_id || null, starts_at: v.starts_at, expires_at: v.expires_at, amount: Math.max(0, Number(v.amount)), status: v.status };
     } else if (data.entity === "payments") {
-      payload = { company_id: v.company_id || null, subscription_id: v.subscription_id || null, sale_id: v.sale_id || null, kind: v.kind, amount: Math.max(0, Number(v.amount)), status: v.status, stripe_reference: v.stripe_reference || null, paid_at: v.status === "paid" ? (v.paid_at || new Date().toISOString()) : null };
+      if (!v.company_id) throw new Error("Selecione a empresa.");
+      if (!['plate', 'subscription', 'renewal'].includes(v.kind)) throw new Error("Selecione um tipo de pagamento válido.");
+      if (Number(v.amount) <= 0) throw new Error("Informe um valor maior que zero.");
+      if (v.status === "paid") throw new Error("Salve como pendente e use Confirmar para concluir o pagamento com segurança.");
+      if ((v.kind === "subscription" || v.kind === "renewal") && !v.subscription_id) throw new Error("Selecione a assinatura relacionada.");
+      if (v.kind === "plate" && !v.sale_id) throw new Error("Selecione a venda relacionada.");
+      payload = { company_id: v.company_id, subscription_id: v.kind === "plate" ? null : v.subscription_id, sale_id: v.kind === "plate" ? v.sale_id : null, kind: v.kind, amount: Math.max(0, Number(v.amount)), status: v.status, stripe_reference: v.stripe_reference?.trim() || null, paid_at: null };
     } else {
       if (!v.seller_id) throw new Error("Selecione o vendedor.");
       const base = Math.max(0, Number(v.base_amount));
@@ -400,6 +406,10 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
       const { data: row, error } = await db.from(data.entity).insert(payload).select("id").single();
       if (error) throw new Error(error.message);
       id = row.id;
+    }
+    if (data.entity === "sales") {
+      await db.from("plates").update({ seller_id: payload.seller_id }).eq("id", payload.plate_id);
+      await db.from("subscriptions").update({ seller_id: payload.seller_id }).eq("plate_id", payload.plate_id).is("seller_id", null);
     }
     await audit(db, context.userId, `${data.entity}.${data.id ? "update" : "create"}`, data.entity, id);
     return { ok: true, id };
@@ -430,14 +440,17 @@ export const listSubscriptions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const db = await requireAdmin(context);
-    const [{ data: subs }, { data: companies }] = await Promise.all([
+    const [{ data: subs }, { data: companies }, { data: sellers }] = await Promise.all([
       db.from("subscriptions").select("*").order("expires_at", { ascending: true }).limit(300),
       db.from("companies").select("id, name"),
+      db.from("sellers").select("id, name"),
     ]);
     const cm = Object.fromEntries((companies ?? []).map((c: any) => [c.id, c.name]));
+    const sm = Object.fromEntries((sellers ?? []).map((s: any) => [s.id, s.name]));
     return (subs ?? []).map((s: any) => ({
       ...s,
       company_name: cm[s.company_id] ?? "—",
+      seller_name: s.seller_id ? sm[s.seller_id] ?? "—" : "Sem vendedor vinculado",
       active: new Date(s.expires_at).getTime() > Date.now(),
     }));
   });
@@ -446,12 +459,26 @@ export const listPayments = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const db = await requireAdmin(context);
-    const [{ data: payments }, { data: companies }] = await Promise.all([
+    const [{ data: payments }, { data: companies }, { data: subscriptions }, { data: sellers }, { data: sales }] = await Promise.all([
       db.from("payments").select("*").order("created_at", { ascending: false }).limit(300),
       db.from("companies").select("id, name"),
+      db.from("subscriptions").select("id, seller_id, expires_at"),
+      db.from("sellers").select("id, name"),
+      db.from("sales").select("id, plate_id"),
     ]);
     const cm = Object.fromEntries((companies ?? []).map((c: any) => [c.id, c.name]));
-    return (payments ?? []).map((p: any) => ({ ...p, company_name: p.company_id ? cm[p.company_id] ?? "—" : "—" }));
+    const subMap = Object.fromEntries((subscriptions ?? []).map((s: any) => [s.id, s]));
+    const sellerMap = Object.fromEntries((sellers ?? []).map((s: any) => [s.id, s.name]));
+    const saleMap = Object.fromEntries((sales ?? []).map((s: any) => [s.id, s]));
+    return (payments ?? []).map((p: any) => {
+      const subscription = p.subscription_id ? subMap[p.subscription_id] : null;
+      return {
+        ...p,
+        company_name: p.company_id ? cm[p.company_id] ?? "—" : "—",
+        seller_name: subscription?.seller_id ? sellerMap[subscription.seller_id] ?? "—" : null,
+        related_label: p.subscription_id ? `Assinatura até ${new Date(subscription.expires_at).toLocaleDateString("pt-BR")}` : p.sale_id ? `Venda da plaquinha ${saleMap[p.sale_id]?.plate_id ? "vinculada" : ""}`.trim() : "—",
+      };
+    });
   });
 
 /** Manual confirmation: renews the subscription for 12 months and creates the renewal commission. */
@@ -460,55 +487,9 @@ export const confirmPayment = createServerFn({ method: "POST" })
   .inputValidator((data: { paymentId: string }) => data)
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
-    const { data: payment } = await db.from("payments").select("*").eq("id", data.paymentId).maybeSingle();
-    if (!payment) throw new Error("Pagamento não encontrado.");
-    if (payment.status === "paid") return { ok: true, already: true };
-
-    await db.from("payments").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", payment.id);
-
-    if ((payment.kind === "renewal" || payment.kind === "subscription") && payment.company_id) {
-      const { data: sub } = await db
-        .from("subscriptions")
-        .select("*")
-        .eq("company_id", payment.company_id)
-        .order("expires_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      const base = sub && new Date(sub.expires_at).getTime() > Date.now() ? new Date(sub.expires_at) : new Date();
-      const expires = new Date(base);
-      expires.setFullYear(expires.getFullYear() + 1);
-      if (sub) {
-        await db.from("subscriptions").update({ expires_at: expires.toISOString(), status: "active" }).eq("id", sub.id);
-      }
-
-      const { data: settings } = await db.from("settings").select("*").eq("id", true).maybeSingle();
-      const percent = Number(settings?.commission_renewal_percent ?? 0);
-      const { data: plate } = await db
-        .from("plates")
-        .select("seller_id")
-        .eq("company_id", payment.company_id)
-        .not("seller_id", "is", null)
-        .limit(1)
-        .maybeSingle();
-      if (plate?.seller_id && percent > 0) {
-        await db.from("commissions").insert({
-          seller_id: plate.seller_id,
-          kind: "renewal",
-          subscription_id: sub?.id ?? null,
-          base_amount: Number(payment.amount),
-          percent,
-          amount: Number(((Number(payment.amount) * percent) / 100).toFixed(2)),
-          status: "pending",
-        });
-      }
-    }
-
-    if (payment.kind === "plate" && payment.sale_id) {
-      await db.from("sales").update({ payment_status: "paid" }).eq("id", payment.sale_id);
-    }
-
-    await audit(db, context.userId, "payment.confirm", "payments", payment.id, { amount: payment.amount });
-    return { ok: true, already: false };
+    const { data: result, error } = await db.rpc("confirm_admin_payment", { _payment_id: data.paymentId, _user_id: context.userId });
+    if (error) throw new Error(error.message);
+    return result as { ok: true; already: boolean; sellerMissing: boolean; expiresAt?: string };
   });
 
 export const listCommissions = createServerFn({ method: "POST" })
