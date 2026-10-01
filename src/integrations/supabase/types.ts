@@ -660,6 +660,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_admin_payment: {
+        Args: { _payment_id: string; _user_id: string }
+        Returns: Json
+      }
       current_seller_id: { Args: never; Returns: string }
       has_role: {
         Args: {
