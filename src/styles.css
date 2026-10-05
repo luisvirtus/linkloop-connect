@@ -212,11 +212,12 @@
   @page { size: A4; margin: 8mm; }
   body { background: var(--card); }
   header, .print-controls { display: none !important; }
-  .print-sheet { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6mm; }
-  .plate-art { color: black; border-color: black; box-shadow: none; page-break-inside: avoid; }
-  .plate-art-small { width: 100mm; min-height: 100mm; }
-  .plate-art-medium { width: 150mm; min-height: 150mm; grid-column: 1 / -1; margin-inline: auto; }
-  .plate-art-large { width: 190mm; min-height: 190mm; grid-column: 1 / -1; margin-inline: auto; }
+  .print-sheet { display: block !important; }
+  .print-sheet .plate-print-art { margin: 0 auto; border: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; break-after: page; break-inside: avoid; }
+  .print-sheet .plate-print-art:last-child { break-after: auto; }
+  .print-sheet .plate-print-small { width: 100mm; page: plateSmall; }
+  .print-sheet .plate-print-medium { width: 150mm; page: plateMedium; }
+  .print-sheet .plate-print-large { width: 200mm; page: plateLarge; }
 }
 
 /* The artwork keeps the same geometry at preview and at its physical print size. */

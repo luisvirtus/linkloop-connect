@@ -6,6 +6,7 @@
 - [x] Melhorar experiência de quem escaneia: leitura mobile, avaliação, contatos e ativação de plaquinha nova
 - [x] Estoque, lotes, geração de QR e artes de impressão
 - [x] Arte quadrada individual e impressão por cliente, vendedor e administrador
+- [x] Usar a mesma arte de referência também na impressão administrativa por lote
 - [ ] Assinatura (12 meses após vínculo) + Stripe/webhooks
 - [x] Vendas, vendedores, comissões, financeiro
 - [x] Painel admin completo, "entrar como cliente", auditoria
