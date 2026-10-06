@@ -313,9 +313,20 @@ export const deleteAdminRecord = createServerFn({ method: "POST" })
       await db.from("pages").delete().eq("company_id", data.id);
       await db.from("plates").delete().eq("company_id", data.id);
     }
+    if (data.entity === "payments") {
+      const { data: pay } = await db.from("payments").select("status").eq("id", data.id).maybeSingle();
+      if (pay?.status === "paid") throw new Error("Pagamentos confirmados não podem ser excluídos. Registre um estorno.");
+    }
     if (data.entity === "sellers") {
-      await db.from("commissions").delete().eq("seller_id", data.id);
-      await db.from("sales").update({ seller_id: null }).eq("seller_id", data.id);
+      const [{ count: c1 }, { count: c2 }] = await Promise.all([
+        db.from("commissions").select("id", { count: "exact", head: true }).eq("seller_id", data.id),
+        db.from("sales").select("id", { count: "exact", head: true }).eq("seller_id", data.id),
+      ]);
+      if ((c1 ?? 0) + (c2 ?? 0) > 0) {
+        await db.from("sellers").update({ active: false }).eq("id", data.id);
+        await audit(db, context.userId, "sellers.deactivate", "sellers", data.id);
+        return { ok: true, deactivated: true };
+      }
       await db.from("plates").update({ seller_id: null }).eq("seller_id", data.id);
     }
     const { error } = await db.from(data.entity).delete().eq("id", data.id);

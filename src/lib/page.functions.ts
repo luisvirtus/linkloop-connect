@@ -27,6 +27,24 @@ async function assertCanEdit(supabase: any, userId: string, companyId: string) {
   return { isAdmin: !!isAdmin };
 }
 
+async function assertPageOfCompany(pageId: string, companyId: string, linkId?: string | null) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: page } = await supabaseAdmin.from("pages").select("id").eq("id", pageId).eq("company_id", companyId).maybeSingle();
+  if (!page) throw new Error("Acesso negado.");
+  if (linkId) {
+    const { data: link } = await supabaseAdmin.from("page_links").select("id").eq("id", linkId).eq("page_id", pageId).maybeSingle();
+    if (!link) throw new Error("Acesso negado.");
+  }
+  return supabaseAdmin;
+}
+
+async function assertLinkOfCompany(linkId: string, companyId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: link } = await supabaseAdmin.from("page_links").select("id, pages!inner(company_id)").eq("id", linkId).eq("pages.company_id", companyId).maybeSingle();
+  if (!link) throw new Error("Acesso negado.");
+  return supabaseAdmin;
+}
+
 export const savePage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
@@ -87,7 +105,7 @@ export const saveLink = createServerFn({ method: "POST" })
     await assertCanEdit(context.supabase, context.userId, data.companyId);
     if (!LINK_CHANNELS.some((channel) => channel.value === data.kind)) throw new Error("Tipo de canal inválido.");
     const normalizedUrl = normalizeLinkValue(data.kind, data.url);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = await assertPageOfCompany(data.pageId, data.companyId, data.id);
     const payload = {
       page_id: data.pageId,
       kind: data.kind,
@@ -116,7 +134,7 @@ export const deleteLink = createServerFn({ method: "POST" })
   .inputValidator((data: { companyId: string; id: string }) => data)
   .handler(async ({ data, context }) => {
     await assertCanEdit(context.supabase, context.userId, data.companyId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabaseAdmin = await assertLinkOfCompany(data.id, data.companyId);
     await supabaseAdmin.from("page_links").delete().eq("id", data.id);
     await supabaseAdmin.from("audit_logs").insert({
       user_id: context.userId,
