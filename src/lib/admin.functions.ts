@@ -313,9 +313,20 @@ export const deleteAdminRecord = createServerFn({ method: "POST" })
       await db.from("pages").delete().eq("company_id", data.id);
       await db.from("plates").delete().eq("company_id", data.id);
     }
+    if (data.entity === "payments") {
+      const { data: pay } = await db.from("payments").select("status").eq("id", data.id).maybeSingle();
+      if (pay?.status === "paid") throw new Error("Pagamentos confirmados não podem ser excluídos. Registre um estorno.");
+    }
     if (data.entity === "sellers") {
-      await db.from("commissions").delete().eq("seller_id", data.id);
-      await db.from("sales").update({ seller_id: null }).eq("seller_id", data.id);
+      const [{ count: c1 }, { count: c2 }] = await Promise.all([
+        db.from("commissions").select("id", { count: "exact", head: true }).eq("seller_id", data.id),
+        db.from("sales").select("id", { count: "exact", head: true }).eq("seller_id", data.id),
+      ]);
+      if ((c1 ?? 0) + (c2 ?? 0) > 0) {
+        await db.from("sellers").update({ active: false }).eq("id", data.id);
+        await audit(db, context.userId, "sellers.deactivate", "sellers", data.id);
+        return { ok: true, deactivated: true };
+      }
       await db.from("plates").update({ seller_id: null }).eq("seller_id", data.id);
     }
     const { error } = await db.from(data.entity).delete().eq("id", data.id);
@@ -390,6 +401,10 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
       payload = { company_id: v.company_id, plate_id: v.plate_id || null, seller_id: v.seller_id || null, starts_at: v.starts_at, expires_at: v.expires_at, amount: Math.max(0, Number(v.amount)), status: v.status };
     } else if (data.entity === "payments") {
       if (!v.company_id) throw new Error("Selecione a empresa.");
+      if ((data as any).id) {
+        const { data: cur } = await db.from("payments").select("status").eq("id", (data as any).id).maybeSingle();
+        if (cur?.status === "paid") throw new Error("Pagamentos confirmados não podem ser alterados.");
+      }
       if (!['plate', 'subscription', 'renewal'].includes(v.kind)) throw new Error("Selecione um tipo de pagamento válido.");
       if (Number(v.amount) <= 0) throw new Error("Informe um valor maior que zero.");
       if (v.status === "paid") throw new Error("Salve como pendente e use Confirmar para concluir o pagamento com segurança.");
