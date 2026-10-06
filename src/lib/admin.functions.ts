@@ -401,6 +401,10 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
       payload = { company_id: v.company_id, plate_id: v.plate_id || null, seller_id: v.seller_id || null, starts_at: v.starts_at, expires_at: v.expires_at, amount: Math.max(0, Number(v.amount)), status: v.status };
     } else if (data.entity === "payments") {
       if (!v.company_id) throw new Error("Selecione a empresa.");
+      if ((data as any).id) {
+        const { data: cur } = await db.from("payments").select("status").eq("id", (data as any).id).maybeSingle();
+        if (cur?.status === "paid") throw new Error("Pagamentos confirmados não podem ser alterados.");
+      }
       if (!['plate', 'subscription', 'renewal'].includes(v.kind)) throw new Error("Selecione um tipo de pagamento válido.");
       if (Number(v.amount) <= 0) throw new Error("Informe um valor maior que zero.");
       if (v.status === "paid") throw new Error("Salve como pendente e use Confirmar para concluir o pagamento com segurança.");
