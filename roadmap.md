@@ -7,8 +7,9 @@
 - [x] Estoque, lotes, geração de QR e artes de impressão
 - [x] Arte quadrada individual e impressão por cliente, vendedor e administrador
 - [x] Usar a mesma arte de referência também na impressão administrativa por lote
-- [ ] Stripe/webhooks — aguardando decisão; renovação manual permanece ativa
-- [ ] Correções pendentes: vínculo atômico, privacidade das empresas e conciliação do pagamento antigo
+- [ ] Stripe/webhooks — bloqueado até autorização do usuário; renovação manual permanece ativa
+- [x] Vínculo atômico, privacidade de empresas/configurações e conciliação do pagamento antigo
+- [x] Preservação do vendedor original na assinatura e na venda
 - [x] Vendas, vendedores, comissões, financeiro
 - [x] Painel admin completo, "entrar como cliente", auditoria
 - [x] Refinar Comercial, Configurações, Auditoria e acesso como cliente
