@@ -175,7 +175,7 @@ export const linkPlate = createServerFn({ method: "POST" })
     const { data: result, error } = await context.supabase.rpc("activate_plate", {
       _code: data.code,
       _company_name: data.companyName,
-      _review_url: data.googleReviewUrl,
+      _review_url: data.googleReviewUrl ?? undefined,
     });
     if (error) throw new Error(error.message);
     return result as { ok: true; companyId: string; pageId: string };
