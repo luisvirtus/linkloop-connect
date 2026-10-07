@@ -36,6 +36,13 @@
       "when": 1791376013295,
       "tag": "0004_atomic_plate_activation_and_private_companies",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791376061732,
+      "tag": "0005_preserve_original_seller",
+      "breakpoints": true
     }
   ]
 }
