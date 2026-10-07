@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.activate_plate(text,text,text) TO service_role;

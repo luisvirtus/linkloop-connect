@@ -660,6 +660,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_plate: {
+        Args: { _code: string; _company_name: string; _review_url?: string }
+        Returns: Json
+      }
       confirm_admin_payment: {
         Args: { _payment_id: string; _user_id: string }
         Returns: Json
@@ -678,6 +682,21 @@ export type Database = {
         Returns: boolean
       }
       owns_company: { Args: { _company_id: string }; Returns: boolean }
+      public_company_by_code: {
+        Args: { _code: string }
+        Returns: {
+          logo_url: string
+          name: string
+          website_url: string
+        }[]
+      }
+      seller_company_names: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "seller" | "client"

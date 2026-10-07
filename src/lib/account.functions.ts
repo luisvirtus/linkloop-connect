@@ -114,7 +114,7 @@ async function loadAccount(supabase: any, userId: string, companyId?: string | n
     page,
     links,
     subscription,
-    subscriptionActive: !!subscription && new Date(subscription.expires_at).getTime() > Date.now(),
+    subscriptionActive: !!subscription && subscription.status === "active" && new Date(subscription.expires_at).getTime() > Date.now(),
     impersonating: !!companyId && isAdmin,
   };
 }
@@ -172,113 +172,11 @@ export const linkPlate = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     if (!data.companyName) throw new Error("Informe o nome da empresa.");
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data: plate } = await supabaseAdmin
-      .from("plates")
-      .select("id, status, cost, seller_id, company_id")
-      .eq("qr_code", data.code)
-      .maybeSingle();
-    if (!plate) throw new Error("Plaquinha não encontrada. Confira o código.");
-    if (plate.status !== "available") throw new Error("Esta plaquinha não está disponível para vinculação.");
-
-    const { data: settings } = await supabaseAdmin.from("settings").select("*").eq("id", true).maybeSingle();
-    const platePrice = Number(settings?.plate_price ?? 80);
-    const plateCost = Number(plate.cost ?? settings?.plate_cost ?? 0);
-    const subscriptionPrice = Number(settings?.subscription_price ?? 0);
-    const salePercent = Number(settings?.commission_sale_percent ?? 0);
-
-    // company (create on first link)
-    let { data: company } = await supabaseAdmin
-      .from("companies")
-      .select("id, name")
-      .eq("owner_id", context.userId)
-      .limit(1)
-      .maybeSingle();
-    if (!company) {
-      const inserted = await supabaseAdmin
-        .from("companies")
-        .insert({ owner_id: context.userId, name: data.companyName })
-        .select("id, name")
-        .single();
-      if (inserted.error) throw new Error(inserted.error.message);
-      company = inserted.data;
-    }
-
-    const now = new Date();
-    const expires = new Date(now);
-    expires.setFullYear(expires.getFullYear() + 1);
-
-    const upd = await supabaseAdmin
-      .from("plates")
-      .update({
-        company_id: company!.id,
-        status: "linked",
-        linked_at: now.toISOString(),
-        sold_at: now.toISOString(),
-        price: platePrice,
-      })
-      .eq("id", plate.id)
-      .eq("status", "available");
-    if (upd.error) throw new Error(upd.error.message);
-
-    const page = await supabaseAdmin
-      .from("pages")
-      .insert({
-        plate_id: plate.id,
-        company_id: company!.id,
-        title: data.companyName,
-        google_review_url: data.googleReviewUrl,
-      })
-      .select("id")
-      .single();
-
-    const sale = await supabaseAdmin
-      .from("sales")
-      .insert({
-        plate_id: plate.id,
-        company_id: company!.id,
-        seller_id: plate.seller_id,
-        amount: platePrice,
-        cost: plateCost,
-        payment_status: "pending",
-      })
-      .select("id")
-      .single();
-
-    const subscription = await supabaseAdmin
-      .from("subscriptions")
-      .insert({
-        company_id: company!.id,
-        plate_id: plate.id,
-        seller_id: plate.seller_id,
-        starts_at: now.toISOString(),
-        expires_at: expires.toISOString(),
-        amount: subscriptionPrice,
-        status: "active",
-      })
-      .select("id")
-      .single();
-
-    if (plate.seller_id && sale.data) {
-      await supabaseAdmin.from("commissions").insert({
-        seller_id: plate.seller_id,
-        kind: "sale",
-        sale_id: sale.data.id,
-        base_amount: platePrice,
-        percent: salePercent,
-        amount: Number(((platePrice * salePercent) / 100).toFixed(2)),
-        status: "pending",
-      });
-    }
-
-    await supabaseAdmin.from("audit_logs").insert({
-      user_id: context.userId,
-      action: "plate.link",
-      entity: "plates",
-      entity_id: plate.id,
-      details: { code: data.code, company: company!.name, subscription: subscription.data?.id },
+    const { data: result, error } = await context.supabase.rpc("activate_plate", {
+      _code: data.code,
+      _company_name: data.companyName,
+      ...(data.googleReviewUrl ? { _review_url: data.googleReviewUrl } : {}),
     });
-
-    return { ok: true, companyId: company!.id, pageId: page.data?.id ?? null };
+    if (error) throw new Error(error.message);
+    return result as { ok: true; companyId: string; pageId: string };
   });

@@ -38,11 +38,11 @@ export const getPublicPage = createServerFn({ method: "GET" })
       .eq("plate_id", plate.id)
       .maybeSingle();
 
-    const { data: company } = await supabase
-      .from("companies")
-      .select("name, website_url, logo_url")
-      .eq("id", plate.company_id)
-      .maybeSingle();
+    const { data: companyRows, error: companyError } = await supabase.rpc("public_company_by_code", {
+      _code: data.code,
+    });
+    if (companyError) throw new Error("Não foi possível carregar esta empresa.");
+    const company = companyRows?.[0];
 
     // Subscription rows are private. This narrowly scoped function exposes only
     // whether this company's public page may show its configured links.
