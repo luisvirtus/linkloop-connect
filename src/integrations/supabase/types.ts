@@ -86,6 +86,7 @@ export type Database = {
           kind: Database["public"]["Enums"]["commission_kind"]
           paid_at: string | null
           payment_id: string | null
+          payment_reference: string | null
           percent: number
           sale_id: string | null
           seller_id: string
@@ -100,6 +101,7 @@ export type Database = {
           kind: Database["public"]["Enums"]["commission_kind"]
           paid_at?: string | null
           payment_id?: string | null
+          payment_reference?: string | null
           percent?: number
           sale_id?: string | null
           seller_id: string
@@ -114,6 +116,7 @@ export type Database = {
           kind?: Database["public"]["Enums"]["commission_kind"]
           paid_at?: string | null
           payment_id?: string | null
+          payment_reference?: string | null
           percent?: number
           sale_id?: string | null
           seller_id?: string
@@ -153,6 +156,7 @@ export type Database = {
       }
       companies: {
         Row: {
+          contact: Json
           created_at: string
           id: string
           logo_url: string | null
@@ -162,6 +166,7 @@ export type Database = {
           website_url: string | null
         }
         Insert: {
+          contact?: Json
           created_at?: string
           id?: string
           logo_url?: string | null
@@ -171,6 +176,7 @@ export type Database = {
           website_url?: string | null
         }
         Update: {
+          contact?: Json
           created_at?: string
           id?: string
           logo_url?: string | null
@@ -339,6 +345,9 @@ export type Database = {
       }
       plates: {
         Row: {
+          annual_consent_amount: number | null
+          annual_consent_at: string | null
+          annual_consent_version: string | null
           batch_id: string | null
           blocked_by_admin: boolean
           blocked_by_client: boolean
@@ -358,6 +367,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          annual_consent_amount?: number | null
+          annual_consent_at?: string | null
+          annual_consent_version?: string | null
           batch_id?: string | null
           blocked_by_admin?: boolean
           blocked_by_client?: boolean
@@ -377,6 +389,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          annual_consent_amount?: number | null
+          annual_consent_at?: string | null
+          annual_consent_version?: string | null
           batch_id?: string | null
           blocked_by_admin?: boolean
           blocked_by_client?: boolean
@@ -510,6 +525,7 @@ export type Database = {
       sellers: {
         Row: {
           active: boolean
+          contact: Json
           created_at: string
           email: string | null
           id: string
@@ -520,6 +536,7 @@ export type Database = {
         }
         Insert: {
           active?: boolean
+          contact?: Json
           created_at?: string
           email?: string | null
           id?: string
@@ -530,6 +547,7 @@ export type Database = {
         }
         Update: {
           active?: boolean
+          contact?: Json
           created_at?: string
           email?: string | null
           id?: string
@@ -664,8 +682,23 @@ export type Database = {
         Args: { _code: string; _company_name: string; _review_url?: string }
         Returns: Json
       }
+      activate_registered_plate: {
+        Args: {
+          _accepted: boolean
+          _annual_price: number
+          _code: string
+          _company_name: string
+          _contact: Json
+          _review_url: string
+        }
+        Returns: Json
+      }
       confirm_admin_payment: {
         Args: { _payment_id: string; _user_id: string }
+        Returns: Json
+      }
+      confirm_commission_payment: {
+        Args: { _id: string; _reference: string }
         Returns: Json
       }
       current_seller_id: { Args: never; Returns: string }
@@ -690,6 +723,7 @@ export type Database = {
           website_url: string
         }[]
       }
+      public_plate_state: { Args: { _code: string }; Returns: Json }
       seller_company_names: {
         Args: never
         Returns: {

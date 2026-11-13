@@ -50,6 +50,20 @@
       "when": 1791376265471,
       "tag": "0006_activation_service_verification_permission",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794575585313,
+      "tag": "0007_registration_consent_and_precise_receipts",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794575680125,
+      "tag": "0008_protect_receipts_and_commission_history",
+      "breakpoints": true
     }
   ]
 }

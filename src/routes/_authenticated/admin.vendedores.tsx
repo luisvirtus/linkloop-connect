@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { deleteAdminRecord, listSellers, saveSeller } from "@/lib/admin.functions";
+import { ContactFields } from "@/components/contact-fields";
+import { emptyContact } from "@/lib/registration";
 import { brl } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
@@ -25,7 +27,7 @@ function Sellers() {
   const fetchSellers = useServerFn(listSellers);
   const save = useServerFn(saveSeller);
   const remove = useServerFn(deleteAdminRecord);
-  const [form, setForm] = useState({ id: "", name: "", email: "", phone: "", active: true });
+  const [form, setForm] = useState({ id: "", name: "", email: "", phone: "", contact: emptyContact, active: true });
   const [showForm, setShowForm] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -37,7 +39,7 @@ function Sellers() {
     mutationFn: (payload: any) => save({ data: payload }),
     onSuccess: (res) => {
       toast.success(res.linkedUser ? "Vendedor salvo e vinculado ao acesso." : "Vendedor salvo. Ele aparece no painel quando entrar com esse e-mail.");
-      setForm({ id: "", name: "", email: "", phone: "", active: true });
+      setForm({ id: "", name: "", email: "", phone: "", contact: emptyContact, active: true });
       setShowForm(false);
       qc.invalidateQueries({ queryKey: ["admin", "sellers"] });
     },
@@ -45,14 +47,14 @@ function Sellers() {
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => remove({ data: { entity: "sellers", id } }),
-    onSuccess: () => { toast.success("Vendedor excluído definitivamente."); qc.invalidateQueries({ queryKey: ["admin"] }); },
+    onSuccess: (res) => { toast.success(res.deactivated ? "Vendedor desativado; histórico preservado." : "Vendedor excluído."); qc.invalidateQueries({ queryKey: ["admin"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
-  const edit = (s: any) => { setForm({ id: s.id, name: s.name, email: s.email ?? "", phone: s.phone ?? "", active: s.active }); setShowForm(true); };
+  const edit = (s: any) => { setForm({ id: s.id, name: s.name, email: s.email ?? "", phone: s.phone ?? "", contact: { ...emptyContact, ...s.contact }, active: s.active }); setShowForm(true); };
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between"><h1 className="font-display text-2xl font-bold">Vendedores</h1><Button onClick={() => { setForm({ id: "", name: "", email: "", phone: "", active: true }); setShowForm(true); }}><Plus /> Incluir vendedor</Button></div>
+      <div className="flex items-center justify-between"><h1 className="font-display text-2xl font-bold">Vendedores</h1><Button onClick={() => { setForm({ id: "", name: "", email: "", phone: "", contact: emptyContact, active: true }); setShowForm(true); }}><Plus /> Incluir vendedor</Button></div>
       {showForm ? <div className="surface-card p-6">
         <div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{form.id ? "Alterar vendedor" : "Novo vendedor"}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowForm(false)}><X /></Button></div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -60,9 +62,10 @@ function Sellers() {
           <input className="input" type="email" maxLength={255} placeholder="E-mail de acesso" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <input className="input" inputMode="tel" maxLength={30} placeholder="Telefone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         </div>
+        <div className="mt-4"><ContactFields value={form.contact} onChange={contact => setForm({ ...form, contact })} /></div>
         <Button className="mt-4"
           disabled={!form.name || saveMutation.isPending}
-          onClick={() => saveMutation.mutate(form)}
+          onClick={() => saveMutation.mutate({ ...form, phone: form.contact.whatsapp })}
         >
           {form.id ? "Salvar alterações" : "Incluir vendedor"}
         </Button>
@@ -98,7 +101,7 @@ function Sellers() {
                       {s.active ? "Ativo" : "Inativo"}
                     </Button>
                   </td>
-                  <td><div className="flex gap-1"><Button variant="ghost" size="icon" title="Alterar vendedor" aria-label={`Alterar ${s.name}`} onClick={() => edit(s)}><Pencil /></Button><Button variant="ghost" size="icon" title="Excluir vendedor" aria-label={`Excluir ${s.name}`} disabled={deleteMutation.isPending} onClick={() => { if (window.confirm(`Excluir definitivamente ${s.name}? As comissões vinculadas também serão apagadas.`)) deleteMutation.mutate(s.id); }}><Trash2 className="text-destructive" /></Button></div></td>
+                  <td><div className="flex gap-1"><Button variant="ghost" size="icon" title="Alterar vendedor" aria-label={`Alterar ${s.name}`} onClick={() => edit(s)}><Pencil /></Button><Button variant="ghost" size="icon" title="Excluir vendedor" aria-label={`Excluir ${s.name}`} disabled={deleteMutation.isPending} onClick={() => { if (window.confirm(`Excluir definitivamente ${s.name}? Se houver histórico, ele será apenas desativado.`)) deleteMutation.mutate(s.id); }}><Trash2 className="text-destructive" /></Button></div></td>
                 </tr>
               ))}
             </tbody>

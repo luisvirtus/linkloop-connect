@@ -1,5 +1,12 @@
 # Roadmap — Plaquinhas QR
 
+- [ ] Ativação direta pelo QR com cadastro e aceite anual
+- [ ] Cadastro de contato, CPF/CNPJ e endereço de clientes e vendedores
+- [ ] Google ativo com extras pausados e painel exclusivo do proprietário
+- [ ] Retirar custo unitário da operação sem apagar histórico
+- [ ] Recebimentos e baixa de comissões consistentes e auditados
+- [ ] Validar o pacote com testes automatizados e navegação real
+
 - [x] Backend: banco, papéis, RLS, auditoria, configurações
 - [x] Login Google + vinculação da plaquinha
 - [x] Página pública `/q/CODIGO` + editor de links + bloqueio

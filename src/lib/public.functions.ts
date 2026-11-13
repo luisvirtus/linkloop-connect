@@ -12,6 +12,7 @@ export type PublicPage = {
   websiteUrl?: string | null;
   googleReviewUrl?: string | null;
   links: PublicLink[];
+  annualPrice?: number;
 };
 
 export const getPublicPage = createServerFn({ method: "GET" })
@@ -19,6 +20,10 @@ export const getPublicPage = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<PublicPage> => {
     const { createPublicClient } = await import("./supabase-public.server");
     const supabase = createPublicClient();
+    const { data: probe, error: probeError } = await supabase.rpc("public_plate_state", { _code: data.code });
+    if (probeError) throw new Error("Não foi possível consultar a plaquinha.");
+    const state = probe as { state: PublicPage["state"]; annualPrice?: number };
+    if (state.state !== "ok") return { state: state.state, annualPrice: state.annualPrice, links: [] };
 
     const { data: plate } = await supabase
       .from("plates")
@@ -52,17 +57,6 @@ export const getPublicPage = createServerFn({ method: "GET" })
 
     const expired = subscriptionActive !== true;
 
-    if (expired) {
-      return {
-        state: "expired",
-        companyName: company?.name ?? page?.title ?? "Empresa",
-        title: page?.title ?? company?.name ?? "Empresa",
-        logoUrl: page?.logo_url ?? company?.logo_url ?? null,
-        websiteUrl: normalizeOptionalWebUrl(company?.website_url),
-        links: [],
-      };
-    }
-
     let links: PublicLink[] = [];
     if (page) {
       const { data: rows } = await supabase
@@ -81,7 +75,7 @@ export const getPublicPage = createServerFn({ method: "GET" })
     }
 
     return {
-      state: "ok",
+      state: expired ? "expired" : "ok",
       companyName: company?.name ?? "Empresa",
       title: page?.title ?? company?.name ?? "Empresa",
       subtitle: page?.subtitle ?? null,

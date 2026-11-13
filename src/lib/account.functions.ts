@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { parseContact, type Contact } from "@/lib/registration";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type AccountPlate = {
@@ -19,7 +20,7 @@ export type AccountData = {
   roles: string[];
   isAdmin: boolean;
   seller: { id: string; name: string } | null;
-  company: { id: string; name: string; website_url: string | null; logo_url: string | null } | null;
+  company: { id: string; name: string; website_url: string | null; logo_url: string | null; contact: Contact } | null;
   plates: AccountPlate[];
   page: {
     id: string;
@@ -46,14 +47,14 @@ async function loadAccount(supabase: any, userId: string, companyId?: string | n
   if (companyId && isAdmin) {
     const { data } = await supabase
       .from("companies")
-      .select("id, name, website_url, logo_url")
+      .select("id, name, website_url, logo_url, contact")
       .eq("id", companyId)
       .maybeSingle();
     company = data ?? null;
   } else {
     const { data } = await supabase
       .from("companies")
-      .select("id, name, website_url, logo_url")
+      .select("id, name, website_url, logo_url, contact")
       .eq("owner_id", userId)
       .order("created_at", { ascending: true })
       .limit(1)
@@ -165,18 +166,35 @@ export const getPlateByCode = createServerFn({ method: "POST" })
 
 export const linkPlate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { code: string; companyName: string; googleReviewUrl?: string }) => ({
-    code: String(data.code).trim().toUpperCase(),
-    companyName: String(data.companyName).trim(),
-    googleReviewUrl: data.googleReviewUrl?.trim() || null,
-  }))
+  .inputValidator((data: { code: string; companyName: string; googleReviewUrl?: string; contact: Contact; accepted: boolean; annualPrice: number }) => data)
   .handler(async ({ data, context }) => {
-    if (!data.companyName) throw new Error("Informe o nome da empresa.");
-    const { data: result, error } = await context.supabase.rpc("activate_plate", {
-      _code: data.code,
-      _company_name: data.companyName,
-      ...(data.googleReviewUrl ? { _review_url: data.googleReviewUrl } : {}),
+    const contact = parseContact(data.contact);
+    if (!data.accepted) throw new Error("Confirme o aceite da anuidade.");
+    const { data: result, error } = await context.supabase.rpc("activate_registered_plate", {
+      _code: data.code.trim().toUpperCase(), _company_name: data.companyName.trim(),
+      _review_url: data.googleReviewUrl?.trim() || undefined, _contact: contact,
+      _accepted: data.accepted, _annual_price: data.annualPrice,
     });
     if (error) throw new Error(error.message);
     return result as { ok: true; companyId: string; pageId: string };
+  });
+
+export const saveAccountContact = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { companyId: string; contact: Contact }) => data)
+  .handler(async ({ data, context }) => {
+    const contact = parseContact(data.contact);
+    const { data: company, error } = await context.supabase.from("companies").update({ contact }).eq("id", data.companyId).select("id").single();
+    if (error || !company) throw new Error("Não foi possível salvar o cadastro.");
+    return { ok: true };
+  });
+
+export const getQrOwner = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { code: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { data: plate } = await context.supabase.from("plates").select("company_id").eq("qr_code", data.code).maybeSingle();
+    if (!plate?.company_id) return { owner: false };
+    const { data: company } = await context.supabase.from("companies").select("id").eq("id", plate.company_id).eq("owner_id", context.userId).maybeSingle();
+    return { owner: !!company };
   });

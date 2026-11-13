@@ -2,6 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { deleteAdminRecord, listAdminOptions, listCompanies, saveCompany } from "@/lib/admin.functions";
+import { ContactFields } from "@/components/contact-fields";
+import { emptyContact } from "@/lib/registration";
 import { dateBR } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { LogIn, Pencil, Plus, Trash2, X } from "lucide-react";
@@ -27,7 +29,7 @@ function Clients() {
   const fetchOptions = useServerFn(listAdminOptions);
   const save = useServerFn(saveCompany);
   const remove = useServerFn(deleteAdminRecord);
-  const [form, setForm] = useState({ id: "", name: "", ownerId: "", websiteUrl: "" });
+  const [form, setForm] = useState({ id: "", name: "", ownerId: "", websiteUrl: "", contact: emptyContact });
   const [showForm, setShowForm] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "companies"],
@@ -37,7 +39,7 @@ function Clients() {
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin"] });
   const saveMutation = useMutation({
     mutationFn: () => save({ data: { ...form, id: form.id || null } }),
-    onSuccess: () => { toast.success(form.id ? "Cliente alterado." : "Cliente incluído."); setShowForm(false); setForm({ id: "", name: "", ownerId: "", websiteUrl: "" }); refresh(); },
+    onSuccess: () => { toast.success(form.id ? "Cliente alterado." : "Cliente incluído."); setShowForm(false); setForm({ id: "", name: "", ownerId: "", websiteUrl: "", contact: emptyContact }); refresh(); },
     onError: (e: Error) => toast.error(e.message),
   });
   const deleteMutation = useMutation({
@@ -45,13 +47,13 @@ function Clients() {
     onSuccess: () => { toast.success("Cliente excluído definitivamente."); refresh(); },
     onError: (e: Error) => toast.error(e.message),
   });
-  const edit = (c: any) => { setForm({ id: c.id, name: c.name, ownerId: c.owner_id, websiteUrl: c.website_url ?? "" }); setShowForm(true); };
+  const edit = (c: any) => { setForm({ id: c.id, name: c.name, ownerId: c.owner_id, websiteUrl: c.website_url ?? "", contact: { ...emptyContact, ...c.contact } }); setShowForm(true); };
   const exclude = (c: any) => { if (window.confirm(`Excluir definitivamente ${c.name}? Plaquinhas, páginas e histórico financeiro vinculados também poderão ser apagados.`)) deleteMutation.mutate(c.id); };
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between"><h1 className="font-display text-2xl font-bold">Clientes</h1><Button onClick={() => { setForm({ id: "", name: "", ownerId: "", websiteUrl: "" }); setShowForm(true); }}><Plus /> Incluir cliente</Button></div>
-      {showForm ? <section className="surface-card p-6"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{form.id ? "Alterar cliente" : "Novo cliente"}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowForm(false)}><X /></Button></div><div className="mt-4 grid gap-3 sm:grid-cols-3"><input className="input" maxLength={120} placeholder="Nome da empresa" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /><select className="input" aria-label="Responsável" value={form.ownerId} onChange={e => setForm({ ...form, ownerId: e.target.value })}><option value="">Selecione o responsável</option>{(options.data?.profiles ?? []).map((p: any) => <option key={p.id} value={p.id}>{p.full_name || p.email || p.id}</option>)}</select><input className="input" type="url" maxLength={500} placeholder="Site da empresa" value={form.websiteUrl} onChange={e => setForm({ ...form, websiteUrl: e.target.value })} /></div><Button className="mt-4" disabled={!form.name.trim() || !form.ownerId || saveMutation.isPending} onClick={() => saveMutation.mutate()}>{form.id ? "Salvar alterações" : "Incluir cliente"}</Button></section> : null}
+      <div className="flex items-center justify-between"><h1 className="font-display text-2xl font-bold">Clientes</h1><Button onClick={() => { setForm({ id: "", name: "", ownerId: "", websiteUrl: "", contact: emptyContact }); setShowForm(true); }}><Plus /> Incluir cliente</Button></div>
+      {showForm ? <section className="surface-card p-6"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{form.id ? "Alterar cliente" : "Novo cliente"}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowForm(false)}><X /></Button></div><div className="mt-4 grid gap-3 sm:grid-cols-3"><input className="input" maxLength={120} placeholder="Nome da empresa" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /><select className="input" aria-label="Responsável" value={form.ownerId} onChange={e => setForm({ ...form, ownerId: e.target.value })}><option value="">Selecione o responsável</option>{(options.data?.profiles ?? []).map((p: any) => <option key={p.id} value={p.id}>{p.full_name || p.email || p.id}</option>)}</select><input className="input" type="url" maxLength={500} placeholder="Site da empresa" value={form.websiteUrl} onChange={e => setForm({ ...form, websiteUrl: e.target.value })} /></div><div className="mt-4"><ContactFields value={form.contact} onChange={contact => setForm({ ...form, contact })} /></div><Button className="mt-4" disabled={!form.name.trim() || !form.ownerId || saveMutation.isPending} onClick={() => saveMutation.mutate()}>{form.id ? "Salvar alterações" : "Incluir cliente"}</Button></section> : null}
       <div className="surface-card p-6">
       <h2 className="font-display text-lg font-bold">Empresas cadastradas</h2>
       {isLoading ? <p className="mt-4 text-sm text-muted-foreground">Carregando...</p> : null}

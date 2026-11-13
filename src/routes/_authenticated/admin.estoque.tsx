@@ -11,7 +11,7 @@ import { Pencil, Plus, Printer, Trash2, X } from "lucide-react";
 export const Route = createFileRoute("/_authenticated/admin/estoque")({
   head: () => ({ meta: [
     { title: "Estoque — Plaquinhas QR" },
-    { name: "description", content: "Lotes, códigos QR, custos e situação das plaquinhas." },
+    { name: "description", content: "Lotes, códigos QR e situação das plaquinhas." },
     { property: "og:title", content: "Estoque — Plaquinhas QR" },
     { property: "og:description", content: "Controle de estoque e geração de lotes." },
     { property: "og:type", content: "website" },
@@ -34,7 +34,7 @@ function Stock() {
 
   const [status, setStatus] = useState<PlateStatus | "">("");
   const [search, setSearch] = useState("");
-  const [batch, setBatch] = useState({ label: "", quantity: 100, size: "medium", unitCost: 0, sellerId: "" });
+  const [batch, setBatch] = useState({ label: "", quantity: 100, size: "medium", sellerId: "" });
   const [showBatch, setShowBatch] = useState(false);
   const [editing, setEditing] = useState<any>(null);
 
@@ -53,7 +53,6 @@ function Stock() {
           label: batch.label,
           quantity: Number(batch.quantity),
           size: batch.size,
-          unitCost: Number(batch.unitCost),
           sellerId: batch.sellerId || null,
         },
       }),
@@ -90,7 +89,7 @@ function Stock() {
       <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="font-display text-2xl font-bold">Estoque</h1><Button onClick={() => setShowBatch(true)}><Plus /> Incluir lote</Button></div>
       {showBatch ? <div className="surface-card p-6">
         <div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">Gerar lote</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowBatch(false)}><X /></Button></div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Nome do lote"><input className="input" maxLength={100} placeholder="Ex.: Produção outubro" value={batch.label} onChange={(e) => setBatch({ ...batch, label: e.target.value })} /></Field>
           <Field label="Quantidade"><input className="input" type="number" min={1} max={2000} value={batch.quantity} onChange={(e) => setBatch({ ...batch, quantity: Number(e.target.value) })} /></Field>
           <Field label="Tamanho"><select className="input" value={batch.size} onChange={(e) => setBatch({ ...batch, size: e.target.value })}>
@@ -98,7 +97,6 @@ function Stock() {
             <option value="medium">Média 15x15</option>
             <option value="large">Grande 20x20</option>
           </select></Field>
-          <Field label="Custo unitário"><input className="input" type="number" min={0} step="0.01" placeholder="R$ 0,00" value={batch.unitCost} onChange={(e) => setBatch({ ...batch, unitCost: Number(e.target.value) })} /></Field>
           <Field label="Vendedor responsável"><select className="input" value={batch.sellerId} onChange={(e) => setBatch({ ...batch, sellerId: e.target.value })}>
             <option value="">Sem vendedor</option>
             {(data?.sellers ?? []).map((s: any) => (
@@ -115,9 +113,9 @@ function Stock() {
         </Button>
       </div> : null}
 
-      {editing ? <section className="surface-card p-6"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">Alterar plaquinha {editing.qr_code}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setEditing(null)}><X /></Button></div><div className="mt-4 grid gap-3 sm:grid-cols-4"><select className="input" value={editing.status} onChange={e => setEditing({ ...editing, status: e.target.value })}>{STATUSES.map(s => <option key={s} value={s}>{PLATE_STATUS_LABEL[s]}</option>)}</select><select className="input" value={editing.seller_id ?? ""} onChange={e => setEditing({ ...editing, seller_id: e.target.value })}><option value="">Sem vendedor</option>{(data?.sellers ?? []).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</select><input className="input" type="number" min="0" step="0.01" placeholder="Custo" value={editing.cost} onChange={e => setEditing({ ...editing, cost: Number(e.target.value) })} /><input className="input" type="number" min="0" step="0.01" placeholder="Preço" value={editing.price ?? ""} onChange={e => setEditing({ ...editing, price: e.target.value === "" ? null : Number(e.target.value) })} /></div><textarea className="input mt-3 min-h-24" maxLength={1000} placeholder="Observações" value={editing.notes ?? ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} /><Button className="mt-3" disabled={updateMutation.isPending} onClick={() => updateMutation.mutate({ plateId: editing.id, status: editing.status, sellerId: editing.seller_id || null, cost: editing.cost, price: editing.price, notes: editing.notes }, { onSuccess: () => { toast.success("Plaquinha alterada."); setEditing(null); } })}>Salvar alterações</Button></section> : null}
+      {editing ? <section className="surface-card p-6"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">Alterar plaquinha {editing.qr_code}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setEditing(null)}><X /></Button></div><div className="mt-4 grid gap-3 sm:grid-cols-4"><select className="input" value={editing.status} onChange={e => setEditing({ ...editing, status: e.target.value })}>{STATUSES.map(s => <option key={s} value={s}>{PLATE_STATUS_LABEL[s]}</option>)}</select><select className="input" value={editing.seller_id ?? ""} onChange={e => setEditing({ ...editing, seller_id: e.target.value })}><option value="">Sem vendedor</option>{(data?.sellers ?? []).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</select><input className="input" type="number" min="0" step="0.01" placeholder="Preço" value={editing.price ?? ""} onChange={e => setEditing({ ...editing, price: e.target.value === "" ? null : Number(e.target.value) })} /></div><textarea className="input mt-3 min-h-24" maxLength={1000} placeholder="Observações" value={editing.notes ?? ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} /><Button className="mt-3" disabled={updateMutation.isPending} onClick={() => updateMutation.mutate({ plateId: editing.id, status: editing.status, sellerId: editing.seller_id || null, price: editing.price, notes: editing.notes }, { onSuccess: () => { toast.success("Plaquinha alterada."); setEditing(null); } })}>Salvar alterações</Button></section> : null}
 
-      <section className="surface-card p-6"><h2 className="font-display text-lg font-bold">Lotes</h2>{batches.isLoading ? <p className="mt-3 text-sm text-muted-foreground">Carregando...</p> : <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead className="text-xs uppercase text-muted-foreground"><tr><th className="py-2">Nome</th><th>Quantidade</th><th>Tamanho</th><th>Custo unitário</th><th>Criado</th><th>Ações</th></tr></thead><tbody>{(batches.data ?? []).map((item: any) => <tr key={item.id} className="border-t border-border"><td className="py-3 font-semibold">{item.label}</td><td>{item.quantity}</td><td>{PLATE_SIZE_LABEL[item.size]}</td><td>{brl(item.unit_cost)}</td><td>{dateBR(item.created_at)}</td><td><Button variant="ghost" size="icon" aria-label={`Excluir lote ${item.label}`} title="Excluir lote" onClick={() => { if (window.confirm(`Excluir definitivamente o lote ${item.label}? As plaquinhas serão mantidas sem lote.`)) deleteMutation.mutate({ entity: "batches", id: item.id }); }}><Trash2 className="text-destructive" /></Button></td></tr>)}</tbody></table></div>}</section>
+      <section className="surface-card p-6"><h2 className="font-display text-lg font-bold">Lotes</h2>{batches.isLoading ? <p className="mt-3 text-sm text-muted-foreground">Carregando...</p> : <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead className="text-xs uppercase text-muted-foreground"><tr><th className="py-2">Nome</th><th>Quantidade</th><th>Tamanho</th><th>Criado</th><th>Ações</th></tr></thead><tbody>{(batches.data ?? []).map((item: any) => <tr key={item.id} className="border-t border-border"><td className="py-3 font-semibold">{item.label}</td><td>{item.quantity}</td><td>{PLATE_SIZE_LABEL[item.size]}</td><td>{dateBR(item.created_at)}</td><td><Button variant="ghost" size="icon" aria-label={`Excluir lote ${item.label}`} title="Excluir lote" onClick={() => { if (window.confirm(`Excluir definitivamente o lote ${item.label}? As plaquinhas serão mantidas sem lote.`)) deleteMutation.mutate({ entity: "batches", id: item.id }); }}><Trash2 className="text-destructive" /></Button></td></tr>)}</tbody></table></div>}</section>
 
       <div className="surface-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -148,7 +146,6 @@ function Stock() {
                 <th>Status</th>
                 <th>Cliente</th>
                 <th>Vendedor</th>
-                <th>Custo</th>
                 <th>Gerada</th>
                 <th>Ações</th>
               </tr>
@@ -183,7 +180,6 @@ function Stock() {
                       ))}
                     </select>
                   </td>
-                  <td>{brl(p.cost)}</td>
                   <td>{dateBR(p.generated_at)}</td>
                   <td className="space-x-2 whitespace-nowrap">
                      <Button asChild variant="ghost" size="icon" title={`Imprimir ${p.qr_code}`} aria-label={`Imprimir ${p.qr_code}`}><Link to="/imprimir/$plateId" params={{ plateId: p.id }}><Printer /></Link></Button>

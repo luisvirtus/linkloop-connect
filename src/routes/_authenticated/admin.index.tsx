@@ -43,14 +43,14 @@ function AdminDashboard() {
       <div className="surface-card p-6">
         <h2 className="font-display text-lg font-bold">Financeiro</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Line label="Receita total" value={brl(data.finance.revenue)} />
+          <Line label="Recebimentos confirmados" value={brl(data.finance.revenue)} />
           <Line label="Receita plaquinhas" value={brl(data.finance.revenuePlates)} />
           <Line label="Receita assinaturas/renovações" value={brl(data.finance.revenueSubscriptions)} />
-          <Line label="Custos" value={brl(data.finance.cost)} />
+          <Line label="Comissões pagas" value={brl(data.finance.commissionsPaid)} />
           <Line label="Comissões" value={brl(data.finance.commissions)} />
           <Line label="Recebido" value={brl(data.finance.received)} />
           <Line label="Pendente" value={brl(data.finance.pending)} />
-          <Line label="Resultado líquido" value={brl(data.finance.result)} strong />
+          <Line label="Receita líquida recebida" value={brl(data.finance.result)} strong />
         </div>
       </div>
 

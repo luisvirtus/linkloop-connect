@@ -33,7 +33,8 @@ function SignIn() {
   useEffect(() => {
     let active = true;
     const go = () => {
-      const next = search.next ?? "/painel";
+      const requested = search.next ?? "/painel";
+      const next = requested.startsWith("/") && !requested.startsWith("//") && !requested.includes("\\") ? requested : "/painel";
       navigate({ to: next as string, search: search.code ? { code: search.code } : undefined as never });
     };
     supabase.auth.getSession().then(({ data }) => {

@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import { parseContact, type Contact } from "@/lib/registration";
+import { financialTotals } from "@/lib/commercial-rules";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function requireAdmin(context: any) {
@@ -23,7 +25,7 @@ const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 function randomCode(len = 6) {
   let out = "";
   const bytes = crypto.getRandomValues(new Uint8Array(len));
-  for (let i = 0; i < len; i++) out += ALPHABET[bytes[i]! % ALPHABET.length];
+  for (let i = 0; i < len; i++) out += ALPHABET[(bytes[i] ?? 0) % ALPHABET.length];
   return out;
 }
 
@@ -36,7 +38,7 @@ export const getAdminDashboard = createServerFn({ method: "POST" })
       db.from("companies").select("id"),
       db.from("subscriptions").select("status, expires_at, amount"),
       db.from("sales").select("amount, cost, payment_status"),
-      db.from("payments").select("amount, status, kind"),
+      db.from("payments").select("amount, status, kind, sale_id"),
       db.from("commissions").select("amount, status"),
       db.from("settings").select("*").eq("id", true).maybeSingle(),
     ]);
@@ -66,24 +68,27 @@ export const getAdminDashboard = createServerFn({ method: "POST" })
     const commissionsPending = commissionRows.filter((c: any) => c.status === "pending").reduce((a: number, c: any) => a + Number(c.amount), 0);
     const commissionsPaid = commissionRows.filter((c: any) => c.status === "paid").reduce((a: number, c: any) => a + Number(c.amount), 0);
 
-    const revenue = revenuePlates + revenueSubscriptions;
-    const commissionsTotal = commissionsPending + commissionsPaid;
-
+    const totals = financialTotals(paymentRows, commissionRows);
+    const representedSales = new Set(paymentRows.filter((p: any) => p.kind === "plate").map((p: any) => p.sale_id));
+    const unrecorded = (await db.from("sales").select("id, amount, payment_status")).data ?? [];
+    const unrecordedPending = unrecorded.filter((r: any) => r.payment_status === "pending" && !representedSales.has(r.id)).reduce((n: number, r: any) => n + Number(r.amount), 0);
+    const revenue = totals.received;
+    const commissionsTotal = totals.commissionsPending + totals.commissionsPaid;
     return {
       plates: { total: plateRows.length, byStatus, blocked },
       companies: companies.data?.length ?? 0,
       subscriptions: { active: subsActive, expired: subsExpired },
       finance: {
         revenue,
-        revenuePlates,
-        revenueSubscriptions,
-        cost: costPlates,
+        revenuePlates: totals.platesReceived,
+        revenueSubscriptions: totals.subscriptionsReceived,
+
         commissions: commissionsTotal,
         commissionsPending,
         commissionsPaid,
         received,
-        pending,
-        result: revenue - costPlates - commissionsTotal,
+        pending: totals.pending + unrecordedPending,
+        result: totals.netReceived,
       },
       settings: settings.data ?? null,
     };
@@ -143,11 +148,11 @@ export const listBatches = createServerFn({ method: "POST" })
 
 export const createBatch = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { label: string; quantity: number; size: string; unitCost: number; sellerId?: string | null }) => ({
+  .inputValidator((data: { label: string; quantity: number; size: string; sellerId?: string | null }) => ({
     label: String(data.label).trim() || "Lote",
     quantity: Math.min(Math.max(Number(data.quantity) || 0, 1), 2000),
     size: data.size,
-    unitCost: Number(data.unitCost) || 0,
+
     sellerId: data.sellerId || null,
   }))
   .handler(async ({ data, context }) => {
@@ -158,7 +163,7 @@ export const createBatch = createServerFn({ method: "POST" })
         label: data.label,
         quantity: data.quantity,
         size: data.size as any,
-        unit_cost: data.unitCost,
+        unit_cost: 0,
         created_by: context.userId,
       })
       .select("id")
@@ -176,7 +181,7 @@ export const createBatch = createServerFn({ method: "POST" })
         qr_code: code,
         batch_id: batch.id,
         size: data.size,
-        cost: data.unitCost,
+        cost: 0,
         seller_id: data.sellerId,
         status: "available",
       });
@@ -199,7 +204,7 @@ export const updatePlate = createServerFn({ method: "POST" })
     if (data.sellerId !== undefined) patch.seller_id = data.sellerId || null;
     if (data.notes !== undefined) patch.notes = data.notes;
     if (data.blockedByAdmin !== undefined) patch.blocked_by_admin = data.blockedByAdmin;
-    if (data.cost !== undefined) patch.cost = Math.max(0, Number(data.cost));
+    
     if (data.price !== undefined) patch.price = data.price === null ? null : Math.max(0, Number(data.price));
     const { error } = await db.from("plates").update(patch).eq("id", data.plateId);
     if (error) throw new Error(error.message);
@@ -228,7 +233,7 @@ export const listCompanies = createServerFn({ method: "POST" })
     const db = await requireAdmin(context);
     const { data: companies } = await db
       .from("companies")
-      .select("id, name, website_url, owner_id, created_at")
+      .select("id, name, website_url, owner_id, created_at, contact")
       .order("created_at", { ascending: false });
     const [{ data: profiles }, { data: subs }, { data: plates }] = await Promise.all([
       db.from("profiles").select("id, email, full_name"),
@@ -268,7 +273,7 @@ export const listAdminOptions = createServerFn({ method: "POST" })
 
 export const saveCompany = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { id?: string | null; name: string; ownerId: string; websiteUrl?: string | null }) => ({
+  .inputValidator((data: { id?: string | null; name: string; ownerId: string; contact: Contact; websiteUrl?: string | null }) => ({
     ...data,
     name: data.name.trim(),
     websiteUrl: data.websiteUrl?.trim() || null,
@@ -276,7 +281,7 @@ export const saveCompany = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
     if (!data.name || !data.ownerId) throw new Error("Informe o nome e o responsável.");
-    const payload = { name: data.name, owner_id: data.ownerId, website_url: data.websiteUrl };
+    const payload = { name: data.name, owner_id: data.ownerId, website_url: data.websiteUrl, contact: parseContact(data.contact) };
     let id = data.id ?? null;
     if (id) {
       const { error } = await db.from("companies").update(payload).eq("id", id);
@@ -340,7 +345,7 @@ export const listSellers = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const db = await requireAdmin(context);
     const [{ data: sellers }, { data: commissions }, { data: sales }] = await Promise.all([
-      db.from("sellers").select("id, name, email, phone, active, user_id").order("name"),
+      db.from("sellers").select("id, name, email, phone, active, user_id, contact").order("name"),
       db.from("commissions").select("seller_id, amount, status"),
       db.from("sales").select("seller_id, amount"),
     ]);
@@ -357,7 +362,7 @@ export const listSellers = createServerFn({ method: "POST" })
 
 export const saveSeller = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { id?: string | null; name: string; email?: string | null; phone?: string | null; active?: boolean }) => data)
+  .inputValidator((data: { id?: string | null; name: string; email?: string | null; phone?: string | null; contact?: Contact; active?: boolean }) => data)
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
     const email = data.email?.trim().toLowerCase() || null;
@@ -367,6 +372,8 @@ export const saveSeller = createServerFn({ method: "POST" })
       userId = profile?.id ?? null;
     }
     const payload: any = { name: data.name.trim(), email, phone: data.phone || null, active: data.active ?? true };
+    if (data.contact) payload.contact = parseContact(data.contact);
+    if (!data.id && !data.contact) throw new Error("Complete o cadastro do vendedor.");
     if (userId) payload.user_id = userId;
     let id = data.id ?? null;
     if (id) {
@@ -395,7 +402,7 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
     let payload: any;
     if (data.entity === "sales") {
       if (!v.plate_id || !v.company_id) throw new Error("Selecione a empresa e a plaquinha.");
-      payload = { plate_id: v.plate_id, company_id: v.company_id, seller_id: v.seller_id || null, amount: Math.max(0, Number(v.amount)), cost: Math.max(0, Number(v.cost)), payment_method: v.payment_method || null, payment_status: v.payment_status, sold_at: v.sold_at };
+      payload = { plate_id: v.plate_id, company_id: v.company_id, seller_id: v.seller_id || null, amount: Math.max(0, Number(v.amount)), payment_method: v.payment_method || null, payment_status: v.payment_status, sold_at: v.sold_at };
     } else if (data.entity === "subscriptions") {
       if (!v.company_id || !v.expires_at) throw new Error("Selecione a empresa e informe o vencimento.");
       payload = { company_id: v.company_id, plate_id: v.plate_id || null, seller_id: v.seller_id || null, starts_at: v.starts_at, expires_at: v.expires_at, amount: Math.max(0, Number(v.amount)), status: v.status };
@@ -407,11 +414,21 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
       }
       if (!['plate', 'subscription', 'renewal'].includes(v.kind)) throw new Error("Selecione um tipo de pagamento válido.");
       if (Number(v.amount) <= 0) throw new Error("Informe um valor maior que zero.");
+      if (!['pending', 'failed'].includes(v.status)) throw new Error("Use apenas pendente ou falhou para pagamentos não confirmados.");
+      if (v.kind === "plate" && v.sale_id) {
+        const { data: related } = await db.from("sales").select("id, company_id").eq("id", v.sale_id).eq("company_id", v.company_id).maybeSingle();
+        if (!related) throw new Error("Selecione uma venda da mesma empresa.");
+      }
+      if (v.kind !== "plate" && v.subscription_id) {
+        const { data: related } = await db.from("subscriptions").select("id").eq("id", v.subscription_id).eq("company_id", v.company_id).neq("status", "cancelled").maybeSingle();
+        if (!related) throw new Error("Selecione uma assinatura válida da mesma empresa.");
+      }
       if (v.status === "paid") throw new Error("Salve como pendente e use Confirmar para concluir o pagamento com segurança.");
       if ((v.kind === "subscription" || v.kind === "renewal") && !v.subscription_id) throw new Error("Selecione a assinatura relacionada.");
       if (v.kind === "plate" && !v.sale_id) throw new Error("Selecione a venda relacionada.");
       payload = { company_id: v.company_id, subscription_id: v.kind === "plate" ? null : v.subscription_id, sale_id: v.kind === "plate" ? v.sale_id : null, kind: v.kind, amount: Math.max(0, Number(v.amount)), status: v.status, stripe_reference: v.stripe_reference?.trim() || null, paid_at: null };
     } else {
+      if (v.status === "paid") throw new Error("Use a baixa de comissão com referência de pagamento.");
       if (!v.seller_id) throw new Error("Selecione o vendedor.");
       const base = Math.max(0, Number(v.base_amount));
       const percent = Math.min(100, Math.max(0, Number(v.percent)));
@@ -425,6 +442,11 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
       const { data: row, error } = await db.from(data.entity).insert(payload).select("id").single();
       if (error) throw new Error(error.message);
       id = row.id;
+    }
+    if (data.entity === "sales" && !data.id) {
+      if (payload.payment_status !== "pending") throw new Error("Registre recebimentos pela aba Pagamentos.");
+      const { error: receiptError } = await db.from("payments").insert({ company_id: payload.company_id, sale_id: id, kind: "plate", amount: payload.amount, status: "pending" });
+      if (receiptError) throw new Error(receiptError.message);
     }
     if (data.entity === "sales") {
       await db.from("plates").update({ seller_id: payload.seller_id }).eq("id", payload.plate_id);
@@ -525,16 +547,12 @@ export const listCommissions = createServerFn({ method: "POST" })
 
 export const payCommission = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { id: string }) => data)
+  .inputValidator((data: { id: string; reference: string }) => data)
   .handler(async ({ data, context }) => {
-    const db = await requireAdmin(context);
-    const { error } = await db
-      .from("commissions")
-      .update({ status: "paid", paid_at: new Date().toISOString() })
-      .eq("id", data.id);
+    await requireAdmin(context);
+    const { data: result, error } = await context.supabase.rpc("confirm_commission_payment", { _id: data.id, _reference: data.reference });
     if (error) throw new Error(error.message);
-    await audit(db, context.userId, "commission.pay", "commissions", data.id);
-    return { ok: true };
+    return result;
   });
 
 export const getSettings = createServerFn({ method: "POST" })
@@ -549,14 +567,15 @@ export const saveSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: {
     plate_price: number;
-    plate_cost: number;
     subscription_price: number;
     commission_sale_percent: number;
     commission_renewal_percent: number;
   }) => data)
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
-    const { error } = await db.from("settings").update({ ...data }).eq("id", true);
+    const payload = { plate_price: data.plate_price, subscription_price: data.subscription_price, commission_sale_percent: data.commission_sale_percent, commission_renewal_percent: data.commission_renewal_percent };
+    if (Object.values(payload).some(v => !Number.isFinite(v) || v < 0) || data.commission_sale_percent > 100 || data.commission_renewal_percent > 100) throw new Error("Confira os valores e percentuais.");
+    const { error } = await db.from("settings").update(payload).eq("id", true);
     if (error) throw new Error(error.message);
     await audit(db, context.userId, "settings.update", "settings", null, data);
     return { ok: true };
@@ -566,7 +585,7 @@ export const resetSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const db = await requireAdmin(context);
-    const defaults = { id: true, plate_price: 80, plate_cost: 20, subscription_price: 99, commission_sale_percent: 10, commission_renewal_percent: 5 };
+    const defaults = { id: true, plate_price: 80, subscription_price: 99, commission_sale_percent: 10, commission_renewal_percent: 5 };
     const { error } = await db.from("settings").upsert(defaults, { onConflict: "id" });
     if (error) throw new Error(error.message);
     await audit(db, context.userId, "settings.reset", "settings", null, defaults);

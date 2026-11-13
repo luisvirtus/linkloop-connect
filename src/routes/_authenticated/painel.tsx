@@ -4,7 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Lock, LogOut, Printer, QrCode, Star, Trash2, Unlock } from "lucide-react";
-import { getAccount, getPlateByCode, linkPlate } from "@/lib/account.functions";
+import { PlateActivation } from "@/components/plate-activation";
+import { ContactFields } from "@/components/contact-fields";
+import { emptyContact } from "@/lib/registration";
+import { getAccount, saveAccountContact } from "@/lib/account.functions";
 import { savePage, saveLink, deleteLink, setPlateBlock, requestRenewal } from "@/lib/page.functions";
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,71 +107,14 @@ function Shell({
 
 function LinkPlateCard({ initialCode, onDone }: { initialCode: string; onDone: () => void }) {
   const [code, setCode] = useState(initialCode.toUpperCase());
-  const [companyName, setCompanyName] = useState("");
-  const [google, setGoogle] = useState("");
-  const check = useServerFn(getPlateByCode);
-  const link = useServerFn(linkPlate);
-  const [status, setStatus] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (initialCode) setCode(initialCode.toUpperCase());
-  }, [initialCode]);
-
-  const checkMutation = useMutation({
-    mutationFn: () => check({ data: { code } }),
-    onSuccess: (res) => {
-      if (!res.found) setStatus("Plaquinha não encontrada. Confira o código.");
-      else if (!res.available) setStatus("Esta plaquinha não está disponível para vinculação.");
-      else setStatus(null);
-    },
-  });
-
-  const linkMutation = useMutation({
-    mutationFn: () => link({ data: { code, companyName, googleReviewUrl: google } }),
-    onSuccess: () => {
-      toast.success("Plaquinha vinculada!");
-      onDone();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <div className="surface-card p-6">
-      <h1 className="font-display text-xl font-bold">Vincular plaquinha</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Informe o código impresso na plaquinha (ou escaneie o QR Code).
-      </p>
-      <div className="mt-5 space-y-3">
-        <Field label="Código da plaquinha">
-          <input
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            onBlur={() => code && checkMutation.mutate()}
-            placeholder="ABC123"
-            className="input"
-          />
-        </Field>
-        {status ? <p className="text-sm text-destructive">{status}</p> : null}
-        <Field label="Nome da empresa">
-          <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="input" />
-        </Field>
-        <Field label="Link de avaliação do Google (opcional agora)">
-          <input value={google} onChange={(e) => setGoogle(e.target.value)} placeholder="https://g.page/..." className="input" />
-        </Field>
-        <button
-          className="w-full rounded-full bg-primary px-6 py-3 font-semibold text-primary-foreground disabled:opacity-60"
-          disabled={!code || !companyName || linkMutation.isPending}
-          onClick={() => linkMutation.mutate()}
-        >
-          {linkMutation.isPending ? "Vinculando..." : "Vincular plaquinha"}
-        </button>
-      </div>
-    </div>
-  );
+  return <><Field label="Código da plaquinha"><input className="input" maxLength={6} value={code} onChange={e => setCode(e.target.value.toUpperCase())} /></Field>{code.length === 6 ? <PlateActivation key={code} code={code} onDone={onDone} /> : null}</>;
 }
 
 function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
   const save = useServerFn(savePage);
+  const saveContact = useServerFn(saveAccountContact);
+  const [contact, setContact] = useState({ ...emptyContact, ...data.company.contact });
+  const contactMutation = useMutation({ mutationFn: () => saveContact({ data: { companyId: data.company.id, contact } }), onSuccess: () => { toast.success("Cadastro salvo."); onChange(); }, onError: (e: Error) => toast.error(e.message) });
   const upsertLink = useServerFn(saveLink);
   const removeLink = useServerFn(deleteLink);
   const block = useServerFn(setPlateBlock);
@@ -236,6 +182,7 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
 
   return (
     <>
+      <section className="border-b border-border pb-6"><h2 className="mb-4 font-display text-lg font-bold">Dados de cadastro</h2><ContactFields value={contact} onChange={setContact} /><Button className="mt-4" disabled={contactMutation.isPending} onClick={() => contactMutation.mutate()}>Salvar cadastro</Button></section>
       {!data.subscriptionActive && !data.impersonating ? (
         <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
           <p className="font-semibold text-destructive">Assinatura vencida</p>

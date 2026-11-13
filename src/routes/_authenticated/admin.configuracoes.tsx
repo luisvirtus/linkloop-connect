@@ -10,7 +10,7 @@ import { BadgePercent, CircleDollarSign, RotateCcw, Save, Settings2 } from "luci
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
   head: () => ({ meta: [
     { title: "Configurações — Plaquinhas QR" },
-    { name: "description", content: "Preços, custos e percentuais de comissão." },
+    { name: "description", content: "Preços e percentuais de comissão." },
     { property: "og:title", content: "Configurações — Plaquinhas QR" },
     { property: "og:description", content: "Configurações comerciais da plataforma." },
     { property: "og:type", content: "website" },
@@ -32,7 +32,6 @@ function Config() {
 
   const [form, setForm] = useState({
     plate_price: 0,
-    plate_cost: 0,
     subscription_price: 0,
     commission_sale_percent: 0,
     commission_renewal_percent: 0,
@@ -41,7 +40,6 @@ function Config() {
   useEffect(() => {
     if (data) setForm({
       plate_price: Number(data.plate_price),
-      plate_cost: Number(data.plate_cost),
       subscription_price: Number(data.subscription_price),
       commission_sale_percent: Number(data.commission_sale_percent),
       commission_renewal_percent: Number(data.commission_renewal_percent),
@@ -81,14 +79,11 @@ function Config() {
       <section className="surface-card p-6">
         <div className="flex items-center gap-2">
           <CircleDollarSign className="h-5 w-5 text-primary" />
-          <h2 className="font-display text-lg font-bold">Preços e custos</h2>
+          <h2 className="font-display text-lg font-bold">Preços</h2>
         </div>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <Field label="Preço da Plaquinha (R$)">
             <input type="number" min="0" step="0.01" className="input" value={form.plate_price} onChange={e => setForm({...form, plate_price: Number(e.target.value)})} />
-          </Field>
-          <Field label="Custo da Plaquinha (R$)">
-            <input type="number" min="0" step="0.01" className="input" value={form.plate_cost} onChange={e => setForm({...form, plate_cost: Number(e.target.value)})} />
           </Field>
           <Field label="Valor da Anuidade (R$)">
             <input type="number" min="0" step="0.01" className="input" value={form.subscription_price} onChange={e => setForm({...form, subscription_price: Number(e.target.value)})} />

@@ -11,6 +11,13 @@ import {
   FaXTwitter,
   FaYoutube,
 } from "react-icons/fa6";
+import { useEffect } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Button } from "@/components/ui/button";
+import { PlateActivation } from "@/components/plate-activation";
+import { getQrOwner } from "@/lib/account.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { publicChannelEnabled } from "@/lib/commercial-rules";
 import { getPublicPage } from "@/lib/public.functions";
 
 export const Route = createFileRoute("/q/$code")({
@@ -77,9 +84,10 @@ function MulticolorRule({ muted = false }: { muted?: boolean }) {
   );
 }
 
-function ChannelLink({ href, label, kind }: { href: string; label: string; kind: string }) {
+function ChannelLink({ href, label, kind, disabled = false }: { href: string; label: string; kind: string; disabled?: boolean }) {
   const channel = ICONS[kind] ?? { icon: Link2, color: "text-channel-web" };
   const Icon = channel.icon;
+  if (disabled) return <div aria-disabled="true" className="flex min-h-16 items-center gap-4 rounded-lg border border-border bg-muted px-4 py-3 opacity-60"><Icon className={`h-5 w-5 shrink-0 ${channel.color}`} /><span className="min-w-0 flex-1 break-words font-semibold">{label}</span><span className="text-xs text-muted-foreground">Pausado</span></div>;
   return (
     <a
       href={href}
@@ -117,17 +125,13 @@ function Message({ title, text, code }: { title: string; text: string; code?: st
 function PublicPage() {
   const page = Route.useLoaderData();
   const { code } = Route.useParams();
+  const ownerCheck = useServerFn(getQrOwner);
+  const [owner, setOwner] = useState(false);
+  useEffect(() => { let alive = true; supabase.auth.getSession().then(async ({ data }) => { if (!data.session) return; const result = await ownerCheck({ data: { code } }); if (alive) setOwner(result.owner); }).catch(() => {}); return () => { alive = false; }; }, [code, ownerCheck]);
 
   if (page.state === "notfound")
     return <Message title="Plaquinha não encontrada" text="Confira o código do QR." />;
-  if (page.state === "unlinked")
-    return (
-      <Message
-        title="Plaquinha ainda não ativada"
-        text="Esta plaquinha ainda não está vinculada a uma empresa. Se ela é sua, ative-a para configurar sua página."
-        code={code}
-      />
-    );
+  if (page.state === "unlinked") return <main className="min-h-screen bg-background"><PlateActivation code={code} annualPrice={page.annualPrice} /></main>;
   if (page.state === "blocked")
     return <Message title="Página temporariamente indisponível" text="Esta plaquinha está bloqueada." />;
 
@@ -139,6 +143,7 @@ function PublicPage() {
     <main className="min-h-screen bg-card sm:flex sm:items-center sm:justify-center sm:bg-muted/55 sm:px-4 sm:py-10">
       <div className="w-full bg-card sm:max-w-md sm:overflow-hidden sm:rounded-lg sm:border sm:border-border sm:shadow-lift">
         <MulticolorRule />
+        {owner ? <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted px-5 py-3 text-sm"><span>{expired ? "Canais pausados: anuidade vencida" : "Esta é sua plaquinha"}</span><Button asChild size="sm" variant="outline"><Link to="/painel">{expired ? "Renovar no painel" : "Meu painel"}</Link></Button></div> : null}
         <div className="mx-auto max-w-md px-5 pb-7 pt-8 sm:px-8 sm:pt-10">
           <header className="text-center">
             {page.logoUrl ? (
@@ -156,7 +161,7 @@ function PublicPage() {
              {page.subtitle ? <p className="mt-1.5 break-words text-sm leading-relaxed text-muted-foreground">{page.subtitle}</p> : null}
           </header>
 
-          {!expired && page.googleReviewUrl ? (
+          {page.googleReviewUrl ? (
             <section className="mt-8 text-center" aria-labelledby="review-title">
               <div className="flex justify-center gap-1.5 text-google-yellow" aria-label="Cinco estrelas">
                 {Array.from({ length: 5 }, (_, index) => <Star key={index} className="h-7 w-7 fill-current" />)}
@@ -195,12 +200,12 @@ function PublicPage() {
                     <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-google-blue" aria-hidden="true" />
                   </a>
                 ) : null}
-                {page.links.map((link) => <ChannelLink key={link.id} href={link.url} label={link.label} kind={link.kind} />)}
+                {page.links.map((link) => <ChannelLink key={link.id} href={link.url} label={link.label} kind={link.kind} disabled={!publicChannelEnabled(expired, link.kind)} />)}
               </div>
             </section>
           ) : null}
 
-           <p className="mt-7 text-center text-xs text-muted-foreground">Plaquinhas QR</p>
+           <p className="mt-7 text-center text-xs text-muted-foreground">Plaquinhas QR · <Link to="/entrar" search={{ next: `/q/${code}` }}>Área da empresa</Link></p>
         </div>
         <MulticolorRule muted />
       </div>
