@@ -12,14 +12,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { brl } from "@/lib/format";
 
-export function PlateActivation({ code, annualPrice: initialPrice, onDone }: { code: string; annualPrice?: number; onDone?: () => void }) {
+export function PlateActivation({ code, annualPrice: initialPrice, onDone }: { code: string; annualPrice?: number | undefined; onDone?: () => void }) {
   const [name, setName] = useState(""); const [review, setReview] = useState(""); const [contact, setContact] = useState(emptyContact);
   const [accepted, setAccepted] = useState(false); const [busy, setBusy] = useState(false); const [signedIn, setSignedIn] = useState(false); const [annualPrice, setAnnualPrice] = useState(initialPrice);
   const activate = useServerFn(linkPlate); const probe = useServerFn(getPublicPage); const navigate = useNavigate();
   useEffect(() => {
     let alive = true;
     supabase.auth.getSession().then(({ data }) => { if (alive) setSignedIn(!!data.session); });
-    if (initialPrice === undefined) probe({ data: { code } }).then(p => { if (alive) setAnnualPrice(p.annualPrice); });
+    if (initialPrice === undefined) probe({ data: { code } }).then(p => { if (alive) setAnnualPrice(p.annualPrice); }).catch(() => toast.error("Não foi possível consultar a anuidade."));
     const draft = sessionStorage.getItem(`activation:${code}`);
     if (draft) { try { const d = JSON.parse(draft); setName(d.name ?? ""); setReview(d.review ?? ""); setContact({ ...emptyContact, ...d.contact }); } catch { sessionStorage.removeItem(`activation:${code}`); } }
     return () => { alive = false; };

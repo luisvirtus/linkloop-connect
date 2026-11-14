@@ -14,3 +14,8 @@
 - Plate activation runs in one authenticated database transaction with a row lock; all related records roll back together to prevent partial or duplicate sales.
 - Public company information is projected by QR-code-scoped functions; base company rows remain private to owners and administrators.
 - Database triggers reject changes to an assigned original seller in sales and subscriptions, preserving renewal commission attribution.
+- Contact details are compact private JSON on companies and sellers; public QR responses never project documents or addresses.
+- QR activation uses a shared form and authenticated transaction that records explicit annual consent and the agreed current price.
+- Financial confirmation functions run with the caller's verified session and lock rows; paid records remain immutable to prevent duplicate or silent reversals.
+- Deprecated cost columns remain historical only; operational totals use confirmed receipts minus paid commissions.
+- New sales create their pending receivable through a database trigger in the same transaction to prevent missing or duplicate receipt records.

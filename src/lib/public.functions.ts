@@ -12,7 +12,7 @@ export type PublicPage = {
   websiteUrl?: string | null;
   googleReviewUrl?: string | null;
   links: PublicLink[];
-  annualPrice?: number;
+  annualPrice?: number | undefined;
 };
 
 export const getPublicPage = createServerFn({ method: "GET" })

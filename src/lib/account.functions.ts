@@ -172,7 +172,7 @@ export const linkPlate = createServerFn({ method: "POST" })
     if (!data.accepted) throw new Error("Confirme o aceite da anuidade.");
     const { data: result, error } = await context.supabase.rpc("activate_registered_plate", {
       _code: data.code.trim().toUpperCase(), _company_name: data.companyName.trim(),
-      _review_url: data.googleReviewUrl?.trim() || undefined, _contact: contact,
+      _review_url: data.googleReviewUrl?.trim() || "", _contact: contact,
       _accepted: data.accepted, _annual_price: data.annualPrice,
     });
     if (error) throw new Error(error.message);

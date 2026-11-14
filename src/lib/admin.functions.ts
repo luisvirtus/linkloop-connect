@@ -402,6 +402,12 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
     let payload: any;
     if (data.entity === "sales") {
       if (!v.plate_id || !v.company_id) throw new Error("Selecione a empresa e a plaquinha.");
+      if (!Number.isFinite(Number(v.amount)) || Number(v.amount) <= 0) throw new Error("Informe um valor positivo.");
+      if (data.id) {
+        const { data: previous } = await db.from("sales").select("payment_status").eq("id", data.id).single();
+        if (previous?.payment_status === "paid") throw new Error("Venda recebida não pode ser alterada.");
+      }
+      if (v.payment_status !== "pending") throw new Error("Registre recebimentos pela aba Pagamentos.");
       payload = { plate_id: v.plate_id, company_id: v.company_id, seller_id: v.seller_id || null, amount: Math.max(0, Number(v.amount)), payment_method: v.payment_method || null, payment_status: v.payment_status, sold_at: v.sold_at };
     } else if (data.entity === "subscriptions") {
       if (!v.company_id || !v.expires_at) throw new Error("Selecione a empresa e informe o vencimento.");
@@ -442,11 +448,6 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
       const { data: row, error } = await db.from(data.entity).insert(payload).select("id").single();
       if (error) throw new Error(error.message);
       id = row.id;
-    }
-    if (data.entity === "sales" && !data.id) {
-      if (payload.payment_status !== "pending") throw new Error("Registre recebimentos pela aba Pagamentos.");
-      const { error: receiptError } = await db.from("payments").insert({ company_id: payload.company_id, sale_id: id, kind: "plate", amount: payload.amount, status: "pending" });
-      if (receiptError) throw new Error(receiptError.message);
     }
     if (data.entity === "sales") {
       await db.from("plates").update({ seller_id: payload.seller_id }).eq("id", payload.plate_id);
@@ -527,8 +528,8 @@ export const confirmPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { paymentId: string }) => data)
   .handler(async ({ data, context }) => {
-    const db = await requireAdmin(context);
-    const { data: result, error } = await db.rpc("confirm_admin_payment", { _payment_id: data.paymentId, _user_id: context.userId });
+    await requireAdmin(context);
+    const { data: result, error } = await context.supabase.rpc("confirm_admin_payment", { _payment_id: data.paymentId, _user_id: context.userId });
     if (error) throw new Error(error.message);
     return result as { ok: true; already: boolean; sellerMissing: boolean; expiresAt?: string };
   });

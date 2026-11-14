@@ -58,9 +58,8 @@ function Sellers() {
       {showForm ? <div className="surface-card p-6">
         <div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{form.id ? "Alterar vendedor" : "Novo vendedor"}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowForm(false)}><X /></Button></div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <input className="input" maxLength={120} placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <input className="input" type="email" maxLength={255} placeholder="E-mail de acesso" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <input className="input" inputMode="tel" maxLength={30} placeholder="Telefone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <label className="grid gap-1 text-sm font-semibold">Nome<input className="input" maxLength={120} placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
+          <label className="grid gap-1 text-sm font-semibold">E-mail de acesso<input className="input" type="email" maxLength={255} placeholder="E-mail de acesso" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
         </div>
         <div className="mt-4"><ContactFields value={form.contact} onChange={contact => setForm({ ...form, contact })} /></div>
         <Button className="mt-4"

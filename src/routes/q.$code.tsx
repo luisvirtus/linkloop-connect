@@ -24,7 +24,7 @@ export const Route = createFileRoute("/q/$code")({
   loader: ({ params }) => getPublicPage({ data: { code: params.code } }),
   head: ({ loaderData }) => {
     const name = loaderData?.companyName ?? "Página";
-    const title = `${name} — Links e avaliação`;
+    const title = loaderData?.state === "unlinked" ? "Ativar plaquinha — Plaquinhas QR" : `${name} — Links e avaliação`;
     const description = `Avalie ${name} no Google e acesse os canais oficiais da empresa.`;
     return {
       meta: [
@@ -34,6 +34,7 @@ export const Route = createFileRoute("/q/$code")({
         { property: "og:description", content: description },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary" },
+        ...(loaderData?.logoUrl?.startsWith("https://") ? [{ property: "og:image", content: loaderData.logoUrl }, { name: "twitter:image", content: loaderData.logoUrl }] : []),
       ],
     };
   },
