@@ -19,6 +19,8 @@ import { getQrOwner } from "@/lib/account.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { publicChannelEnabled } from "@/lib/commercial-rules";
 import { getPublicPage } from "@/lib/public.functions";
+import { BellRing } from "lucide-react";
+import { MenuOrder } from "@/components/menu-order";
 
 export const Route = createFileRoute("/q/$code")({
   loader: ({ params }) => getPublicPage({ data: { code: params.code } }),
@@ -47,6 +49,7 @@ type ChannelIcon = { icon: ComponentType<{ className?: string }>; color: string 
 
 const ICONS: Record<string, ChannelIcon> = {
   whatsapp: { icon: FaWhatsapp, color: "text-channel-whatsapp" },
+  waiter: { icon: BellRing, color: "text-google-blue" },
   instagram: { icon: FaInstagram, color: "text-channel-instagram" },
   website: { icon: Globe, color: "text-channel-web" },
   google: { icon: Star, color: "text-google-yellow" },
@@ -205,6 +208,8 @@ function PublicPage() {
               </div>
             </section>
           ) : null}
+
+          {page.menu && !expired ? <MenuOrder items={page.menu} phone={page.orderPhone ?? null} plateLabel={page.plateLabel ?? null} /> : null}
 
            <p className="mt-7 text-center text-xs text-muted-foreground">Plaquinhas QR · <Link to="/entrar" search={{ next: `/q/${code}` }}>Área da empresa</Link></p>
         </div>

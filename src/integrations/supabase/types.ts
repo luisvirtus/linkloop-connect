@@ -238,6 +238,8 @@ export type Database = {
           google_review_url: string | null
           id: string
           logo_url: string | null
+          menu: Json
+          menu_enabled: boolean
           plate_id: string
           subtitle: string | null
           title: string
@@ -249,6 +251,8 @@ export type Database = {
           google_review_url?: string | null
           id?: string
           logo_url?: string | null
+          menu?: Json
+          menu_enabled?: boolean
           plate_id: string
           subtitle?: string | null
           title: string
@@ -260,6 +264,8 @@ export type Database = {
           google_review_url?: string | null
           id?: string
           logo_url?: string | null
+          menu?: Json
+          menu_enabled?: boolean
           plate_id?: string
           subtitle?: string | null
           title?: string
@@ -355,6 +361,7 @@ export type Database = {
           cost: number
           generated_at: string
           id: string
+          label: string | null
           linked_at: string | null
           notes: string | null
           price: number | null
@@ -377,6 +384,7 @@ export type Database = {
           cost?: number
           generated_at?: string
           id?: string
+          label?: string | null
           linked_at?: string | null
           notes?: string | null
           price?: number | null
@@ -399,6 +407,7 @@ export type Database = {
           cost?: number
           generated_at?: string
           id?: string
+          label?: string | null
           linked_at?: string | null
           notes?: string | null
           price?: number | null

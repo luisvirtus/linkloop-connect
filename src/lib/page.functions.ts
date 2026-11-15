@@ -227,3 +227,68 @@ export const requestRenewal = createServerFn({ method: "POST" })
     });
     return { ok: true, paymentId: payment.data?.id ?? null, alreadyPending: false };
   });
+
+async function assertPlateOfCompany(supabase: any, plateId: string, companyId: string) {
+  const { data: plate } = await supabase.from("plates").select("id").eq("id", plateId).eq("company_id", companyId).maybeSingle();
+  if (!plate) throw new Error("Plaquinha não encontrada.");
+}
+
+/** Short nickname (e.g. "Mesa 04"); works even with an expired subscription. */
+export const setPlateLabel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { companyId: string; plateId: string; label: string }) => ({ ...data, label: String(data.label ?? "").trim().slice(0, 40) }))
+  .handler(async ({ data, context }) => {
+    await assertPlateOfCompany(context.supabase, data.plateId, data.companyId);
+    const { error } = await context.supabase.from("plates").update({ label: data.label || null }).eq("id", data.plateId);
+    if (error) throw new Error("Não foi possível salvar o apelido.");
+    return { ok: true };
+  });
+
+/** Gives one plate its own page (copy of the default page) or returns it to the shared page. */
+export const setPlateCustomPage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { companyId: string; plateId: string; custom: boolean }) => data)
+  .handler(async ({ data, context }) => {
+    await assertCanEdit(context.supabase, context.userId, data.companyId);
+    await assertPlateOfCompany(context.supabase, data.plateId, data.companyId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: pages } = await supabaseAdmin.from("pages").select("*").eq("company_id", data.companyId).order("created_at", { ascending: true });
+    const main = pages?.[0];
+    if (!main) throw new Error("Página não encontrada.");
+    if (main.plate_id === data.plateId) throw new Error("Esta plaquinha já usa a página padrão.");
+    const own = pages?.find((pg) => pg.plate_id === data.plateId);
+    if (data.custom && !own) {
+      const { data: created, error } = await supabaseAdmin.from("pages").insert({
+        plate_id: data.plateId, company_id: data.companyId, title: main.title, subtitle: main.subtitle,
+        logo_url: main.logo_url, google_review_url: main.google_review_url, menu_enabled: main.menu_enabled, menu: main.menu,
+      }).select("id").single();
+      if (error || !created) throw new Error("Não foi possível criar a página.");
+      const { data: links } = await supabaseAdmin.from("page_links").select("kind, label, url, position, active").eq("page_id", main.id);
+      if (links?.length) await supabaseAdmin.from("page_links").insert(links.map((l) => ({ ...l, page_id: created.id })));
+    }
+    if (!data.custom && own) {
+      await supabaseAdmin.from("page_links").delete().eq("page_id", own.id);
+      await supabaseAdmin.from("pages").delete().eq("id", own.id);
+    }
+    await supabaseAdmin.from("audit_logs").insert({ user_id: context.userId, action: data.custom ? "page.custom" : "page.shared", entity: "plates", entity_id: data.plateId });
+    return { ok: true };
+  });
+
+export const saveMenu = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { companyId: string; pageId: string; enabled: boolean; items: { c: string; n: string; d?: string; p: number }[] }) => {
+    const items = (data.items ?? []).slice(0, 150).map((i) => ({
+      c: String(i.c ?? "").trim().slice(0, 40),
+      n: String(i.n ?? "").trim().slice(0, 60),
+      d: String(i.d ?? "").trim().slice(0, 120) || undefined,
+      p: Math.round(Math.max(0, Number(i.p) || 0) * 100) / 100,
+    })).filter((i) => i.n);
+    return { ...data, enabled: !!data.enabled, items };
+  })
+  .handler(async ({ data, context }) => {
+    await assertCanEdit(context.supabase, context.userId, data.companyId);
+    const supabaseAdmin = await assertPageOfCompany(data.pageId, data.companyId);
+    const { error } = await supabaseAdmin.from("pages").update({ menu_enabled: data.enabled, menu: data.items }).eq("id", data.pageId);
+    if (error) throw new Error("Não foi possível salvar o cardápio.");
+    return { ok: true };
+  });

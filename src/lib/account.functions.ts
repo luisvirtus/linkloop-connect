@@ -11,6 +11,14 @@ export type AccountPlate = {
   blocked_by_client: boolean;
   blocked_by_admin: boolean;
   linked_at: string | null;
+  label: string | null;
+};
+
+export type MenuItem = { c: string; n: string; d?: string; p: number };
+export type AccountPage = {
+  id: string; plate_id: string; title: string; subtitle: string | null; logo_url: string | null;
+  google_review_url: string | null; menu_enabled: boolean; menu: MenuItem[];
+  links: { id: string; kind: string; label: string; url: string; position: number; active: boolean }[];
 };
 
 export type AccountData = {
@@ -31,6 +39,7 @@ export type AccountData = {
     google_review_url: string | null;
   } | null;
   links: { id: string; kind: string; label: string; url: string; position: number; active: boolean }[];
+  pages: AccountPage[];
   subscription: { id: string; starts_at: string; expires_at: string; amount: number; status: string } | null;
   subscriptionActive: boolean;
   impersonating: boolean;
@@ -66,32 +75,28 @@ async function loadAccount(supabase: any, userId: string, companyId?: string | n
   let page: AccountData["page"] = null;
   let links: AccountData["links"] = [];
   let subscription: AccountData["subscription"] = null;
+  let pages: AccountPage[] = [];
 
   if (company) {
     const { data: plateRows } = await supabase
       .from("plates")
-      .select("id, serial, qr_code, size, status, blocked_by_client, blocked_by_admin, linked_at")
+      .select("id, serial, qr_code, size, status, blocked_by_client, blocked_by_admin, linked_at, label")
       .eq("company_id", company.id)
       .order("serial", { ascending: true });
     plates = plateRows ?? [];
 
-    const { data: pageRow } = await supabase
+    const { data: pageRows } = await supabase
       .from("pages")
-      .select("id, plate_id, title, subtitle, logo_url, google_review_url")
+      .select("id, plate_id, title, subtitle, logo_url, google_review_url, menu_enabled, menu")
       .eq("company_id", company.id)
-      .order("created_at", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-    page = pageRow ?? null;
-
-    if (page) {
-      const { data: linkRows } = await supabase
-        .from("page_links")
-        .select("id, kind, label, url, position, active")
-        .eq("page_id", page.id)
-        .order("position", { ascending: true });
-      links = linkRows ?? [];
-    }
+      .order("created_at", { ascending: true });
+    const ids = (pageRows ?? []).map((r: { id: string }) => r.id);
+    const { data: linkRows } = ids.length
+      ? await supabase.from("page_links").select("id, page_id, kind, label, url, position, active").in("page_id", ids).order("position", { ascending: true })
+      : { data: [] };
+    pages = (pageRows ?? []).map((r: any) => ({ ...r, menu: Array.isArray(r.menu) ? r.menu : [], links: (linkRows ?? []).filter((l: any) => l.page_id === r.id) }));
+    page = pages[0] ?? null;
+    links = pages[0]?.links ?? [];
 
     const { data: subRow } = await supabase
       .from("subscriptions")
@@ -114,6 +119,7 @@ async function loadAccount(supabase: any, userId: string, companyId?: string | n
     plates,
     page,
     links,
+    pages,
     subscription,
     subscriptionActive: !!subscription && subscription.status === "active" && new Date(subscription.expires_at).getTime() > Date.now(),
     impersonating: !!companyId && isAdmin,

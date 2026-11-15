@@ -8,7 +8,7 @@ import { PlateActivation } from "@/components/plate-activation";
 import { ContactFields } from "@/components/contact-fields";
 import { emptyContact } from "@/lib/registration";
 import { getAccount, saveAccountContact } from "@/lib/account.functions";
-import { savePage, saveLink, deleteLink, setPlateBlock, requestRenewal } from "@/lib/page.functions";
+import { savePage, saveLink, deleteLink, setPlateBlock, requestRenewal, setPlateLabel, setPlateCustomPage, saveMenu } from "@/lib/page.functions";
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { channelFor, editableLinkValue, LINK_CHANNELS, normalizeLinkValue } from "@/lib/link-channels";
@@ -111,6 +111,72 @@ function LinkPlateCard({ initialCode, onDone }: { initialCode: string; onDone: (
 }
 
 function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
+  const [pageId, setPageId] = useState<string>(data.pages?.[0]?.id ?? "");
+  const page = data.pages?.find((pg: any) => pg.id === pageId) ?? data.pages?.[0] ?? null;
+  const plateName = (id: string) => { const p = data.plates.find((x: any) => x.id === id); return p ? (p.label || p.qr_code) : "Plaquinha"; };
+  return (
+    <>
+      {data.pages?.length > 1 ? (
+        <Field label="Página que você está editando">
+          <select className="input" value={page?.id} onChange={(e) => setPageId(e.target.value)}>
+            {data.pages.map((pg: any, i: number) => <option key={pg.id} value={pg.id}>{i === 0 ? "Página padrão (todas as plaquinhas)" : `Página própria: ${plateName(pg.plate_id)}`}</option>)}
+          </select>
+        </Field>
+      ) : null}
+      <CompanyPanelInner key={page?.id} data={{ ...data, page, links: page?.links ?? [] }} onChange={onChange} />
+    </>
+  );
+}
+
+function MenuEditor({ data, active, onChange }: { data: any; active: boolean; onChange: () => void }) {
+  const save = useServerFn(saveMenu);
+  const [enabled, setEnabled] = useState<boolean>(!!data.page?.menu_enabled);
+  const [items, setItems] = useState<any[]>(data.page?.menu ?? []);
+  const m = useMutation({ mutationFn: () => save({ data: { companyId: data.company.id, pageId: data.page.id, enabled, items } }), onSuccess: () => { toast.success("Cardápio salvo."); onChange(); }, onError: (e: Error) => toast.error(e.message) });
+  const set = (i: number, k: string, v: any) => setItems((s) => s.map((it, j) => (j === i ? { ...it, [k]: v } : it)));
+  return (
+    <div className="surface-card p-6">
+      <h2 className="font-display text-lg font-bold">Cardápio (opcional)</h2>
+      <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={enabled} disabled={!active} onChange={(e) => setEnabled(e.target.checked)} /> Mostrar cardápio na página e receber pedidos pelo WhatsApp</label>
+      {enabled ? (
+        <div className="mt-4 space-y-3">
+          <p className="text-xs text-muted-foreground">Os pedidos vão para o número do item "Chamar atendente" ou, se não houver, do WhatsApp.</p>
+          {items.map((it, i) => (
+            <div key={i} className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-[1fr_1.5fr_0.8fr_auto]">
+              <input className="input" aria-label="Categoria" placeholder="Categoria" value={it.c ?? ""} disabled={!active} onChange={(e) => set(i, "c", e.target.value)} />
+              <input className="input" aria-label="Item" placeholder="Nome do item" value={it.n ?? ""} disabled={!active} onChange={(e) => set(i, "n", e.target.value)} />
+              <input className="input" aria-label="Preço" type="number" min={0} step="0.01" placeholder="Preço" value={it.p ?? ""} disabled={!active} onChange={(e) => set(i, "p", e.target.value)} />
+              <button className="text-sm text-destructive" disabled={!active} onClick={() => setItems((s) => s.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></button>
+              <input className="input sm:col-span-4" aria-label="Descrição" placeholder="Descrição (opcional)" value={it.d ?? ""} disabled={!active} onChange={(e) => set(i, "d", e.target.value)} />
+            </div>
+          ))}
+          <Button variant="outline" disabled={!active} onClick={() => setItems((s) => [...s, { c: s[s.length - 1]?.c ?? "", n: "", p: 0 }])}>Adicionar item</Button>
+        </div>
+      ) : null}
+      <Button className="mt-4" disabled={!active || m.isPending} onClick={() => m.mutate()}>Salvar cardápio</Button>
+    </div>
+  );
+}
+
+function PlateRowExtras({ plate, data, onChange }: { plate: any; data: any; onChange: () => void }) {
+  const saveLabel = useServerFn(setPlateLabel);
+  const setCustom = useServerFn(setPlateCustomPage);
+  const [label, setLabel] = useState(plate.label ?? "");
+  const isMain = data.pages?.[0]?.plate_id === plate.id;
+  const custom = !isMain && data.pages?.some((pg: any) => pg.plate_id === plate.id);
+  const lm = useMutation({ mutationFn: () => saveLabel({ data: { companyId: data.company.id, plateId: plate.id, label } }), onSuccess: () => { toast.success("Apelido salvo."); onChange(); }, onError: (e: Error) => toast.error(e.message) });
+  const cm = useMutation({ mutationFn: (c: boolean) => setCustom({ data: { companyId: data.company.id, plateId: plate.id, custom: c } }), onSuccess: () => onChange(), onError: (e: Error) => toast.error(e.message) });
+  return (
+    <div className="flex w-full flex-wrap items-end gap-3 border-t border-border pt-3">
+      <Field label="Apelido (ex.: Mesa 04)"><input className="input" maxLength={40} value={label} onChange={(e) => setLabel(e.target.value)} onBlur={() => label !== (plate.label ?? "") && lm.mutate()} /></Field>
+      {!isMain ? (
+        <label className="flex items-center gap-2 pb-3 text-sm"><input type="checkbox" checked={custom} disabled={cm.isPending || !(data.subscriptionActive || data.impersonating)} onChange={(e) => { if (!e.target.checked && !confirm("Voltar para a página padrão apaga os links próprios desta plaquinha. Continuar?")) return; cm.mutate(e.target.checked); }} /> Página própria (filial/setor)</label>
+      ) : <span className="pb-3 text-xs text-muted-foreground">Usa a página padrão</span>}
+    </div>
+  );
+}
+
+function CompanyPanelInner({ data, onChange }: { data: any; onChange: () => void }) {
   const save = useServerFn(savePage);
   const saveContact = useServerFn(saveAccountContact);
   const [contact, setContact] = useState({ ...emptyContact, ...data.company.contact });
@@ -275,13 +341,15 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
         </div>
       </div>
 
+      {data.page ? <MenuEditor data={data} active={active} onChange={onChange} /> : null}
+
       <div className="surface-card p-6">
         <h2 className="font-display text-lg font-bold">Plaquinhas</h2>
         <div className="mt-4 space-y-3">
           {data.plates.map((p: any) => (
             <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4">
               <div>
-                <p className="font-semibold">{p.qr_code}</p>
+                <p className="font-semibold">{p.label ? `${p.label} · ` : ""}{p.qr_code}</p>
                 <p className="text-xs text-muted-foreground">
                   {PLATE_SIZE_LABEL[p.size] ?? p.size} · {PLATE_STATUS_LABEL[p.status] ?? p.status}
                   {p.blocked_by_client ? " · bloqueada por você" : ""}
@@ -300,6 +368,7 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
                   {p.blocked_by_client ? <><Unlock className="h-4 w-4" /> Desbloquear</> : <><Lock className="h-4 w-4" /> Bloquear</>}
                 </button>
               </div>
+              <PlateRowExtras plate={p} data={data} onChange={onChange} />
             </div>
           ))}
         </div>

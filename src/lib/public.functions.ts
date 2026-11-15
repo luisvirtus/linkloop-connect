@@ -13,6 +13,9 @@ export type PublicPage = {
   googleReviewUrl?: string | null;
   links: PublicLink[];
   annualPrice?: number | undefined;
+  plateLabel?: string | null;
+  menu?: { c: string; n: string; d?: string; p: number }[] | null;
+  orderPhone?: string | null;
 };
 
 export const getPublicPage = createServerFn({ method: "GET" })
@@ -27,7 +30,7 @@ export const getPublicPage = createServerFn({ method: "GET" })
 
     const { data: plate } = await supabase
       .from("plates")
-      .select("id, status, company_id, blocked_by_client, blocked_by_admin")
+      .select("id, status, company_id, blocked_by_client, blocked_by_admin, label")
       .eq("qr_code", data.code)
       .maybeSingle();
 
@@ -37,11 +40,12 @@ export const getPublicPage = createServerFn({ method: "GET" })
     }
     if (!plate.company_id) return { state: "unlinked", links: [] };
 
-    const { data: page } = await supabase
-      .from("pages")
-      .select("id, title, subtitle, logo_url, google_review_url, company_id")
-      .eq("plate_id", plate.id)
-      .maybeSingle();
+    // Unified page by default: the plate's own page when customized, else the company's first page.
+    const cols = "id, title, subtitle, logo_url, google_review_url, company_id, menu_enabled, menu";
+    let { data: page } = await supabase.from("pages").select(cols).eq("plate_id", plate.id).maybeSingle();
+    if (!page) {
+      ({ data: page } = await supabase.from("pages").select(cols).eq("company_id", plate.company_id).order("created_at", { ascending: true }).limit(1).maybeSingle());
+    }
 
     const { data: companyRows, error: companyError } = await supabase.rpc("public_company_by_code", {
       _code: data.code,
@@ -65,9 +69,12 @@ export const getPublicPage = createServerFn({ method: "GET" })
         .eq("page_id", page.id)
         .eq("active", true)
         .order("position", { ascending: true });
+      const label = plate.label?.trim();
       links = (rows ?? []).flatMap((link) => {
         try {
-          return [{ ...link, url: normalizeLinkValue(link.kind, link.url) }];
+          let url = normalizeLinkValue(link.kind, link.url);
+          if (link.kind === "waiter") url += `?text=${encodeURIComponent(`Olá! ${label || "Um cliente"} está solicitando atendimento.`)}`;
+          return [{ ...link, url }];
         } catch {
           return [];
         }
@@ -83,5 +90,11 @@ export const getPublicPage = createServerFn({ method: "GET" })
       websiteUrl: normalizeOptionalWebUrl(company?.website_url),
       googleReviewUrl: normalizeOptionalWebUrl(page?.google_review_url),
       links,
+      plateLabel: plate.label ?? null,
+      menu: page?.menu_enabled && Array.isArray(page.menu) && page.menu.length ? (page.menu as NonNullable<PublicPage["menu"]>) : null,
+      orderPhone: (() => {
+        const l = links.find((x) => x.kind === "waiter") ?? links.find((x) => x.kind === "whatsapp");
+        return l?.url.match(/wa\.me\/(\d+)/)?.[1] ?? null;
+      })(),
     };
   });

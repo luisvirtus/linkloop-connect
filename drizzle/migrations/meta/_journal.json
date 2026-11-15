@@ -71,6 +71,13 @@
       "when": 1794669739153,
       "tag": "0009_atomic_sale_receivable",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794714100939,
+      "tag": "0010_plate_labels_menu",
+      "breakpoints": true
     }
   ]
 }

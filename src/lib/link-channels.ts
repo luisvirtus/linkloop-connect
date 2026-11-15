@@ -20,6 +20,7 @@ export const LINK_CHANNELS: LinkChannel[] = [
   { value: "phone", label: "Telefone", placeholder: "(11) 3333-4444", inputMode: "tel" },
   { value: "maps", label: "Localização", placeholder: "Link do Google Maps", inputMode: "url" },
   { value: "website", label: "Site", placeholder: "suaempresa.com.br", inputMode: "url" },
+  { value: "waiter", label: "Chamar atendente", placeholder: "WhatsApp que recebe os chamados", inputMode: "tel" },
   OTHER_CHANNEL,
 ];
 
@@ -64,7 +65,7 @@ export function normalizeLinkValue(kind: string, rawValue: string) {
   const value = rawValue.trim();
   if (!value) throw new Error("Preencha o contato ou endereço.");
 
-  if (kind === "whatsapp") {
+  if (kind === "whatsapp" || kind === "waiter") {
     const fromUrl = value.match(/(?:wa\.me\/|phone=)(\d+)/i)?.[1] ?? value;
     return `https://wa.me/${brazilianNumber(fromUrl)}`;
   }
@@ -87,7 +88,7 @@ export function normalizeOptionalWebUrl(rawValue?: string | null) {
 }
 
 export function editableLinkValue(kind: string, value: string) {
-  if (kind === "whatsapp") return value.match(/wa\.me\/(\d+)/i)?.[1] ?? value;
+  if (kind === "whatsapp" || kind === "waiter") return value.match(/wa\.me\/(\d+)/i)?.[1] ?? value;
   if (kind === "phone") return value.replace(/^tel:\+?/i, "");
   if (kind === "email") return value.replace(/^mailto:/i, "");
   return value;
