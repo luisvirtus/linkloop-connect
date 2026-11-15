@@ -1,5 +1,8 @@
 # Roadmap — Plaquinhas QR
 
+- [x] Aplicar padrão CRUD às demais telas internas, preservando página pública e arte impressa
+- [x] Conferir tabelas, gavetas de edição e navegação nas telas atualizadas em computador e celular
+
 - [x] Renovar tela de Clientes seguindo a referência CRUD Companies, preservando as ações existentes
 - [x] Conferir busca, filtros, formulário e navegação em computador e celular
 

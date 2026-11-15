@@ -192,6 +192,32 @@
   box-shadow: var(--shadow-soft);
 }
 
+/* Scoped to the management experience: public QR pages and printed artwork stay unchanged. */
+.system-ui { --radius: 0.5rem; }
+.system-ui .surface-card { border-radius: 8px; box-shadow: none; }
+.system-ui .surface-card:has(.records-view) { padding: 0; border: 0; background: transparent; }
+.system-ui .surface-card:has(.records-view) > h2,
+.system-ui .surface-card:has(.records-view) > div:first-child:not(.records-view) { margin-bottom: 16px; }
+.system-ui .surface-card:has(.records-view) > .overflow-x-auto,
+.system-ui .surface-card:has(.records-view) > div > .overflow-x-auto { overflow: visible; }
+.system-ui main, .system-ui section, .system-ui .records-view { min-width: 0; }
+.system-editor { --radius: 0.5rem; }
+.system-editor .surface-card { border: 0; border-radius: 0; box-shadow: none; padding: 0; }
+.system-editor .surface-card > div:first-child:has(h2) { display: none; }
+.system-editor .grid { grid-template-columns: minmax(0, 1fr); }
+.system-editor .grid > * { grid-column: auto; }
+.system-editor .grid:has(input[type="number"]) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 639px) { .system-editor .grid:has(input[type="number"]) { grid-template-columns: minmax(0, 1fr); } }
+.system-ui .management-section { border: 0; border-radius: 0; border-bottom: 1px solid var(--border); box-shadow: none; padding: 24px 0; background: transparent; }
+.system-ui .metric { border: 0; border-radius: 0; box-shadow: none; border-left: 2px solid var(--border); background: transparent; }
+@media (max-width: 639px) {
+  .system-ui .grid:has(> .metric) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .system-ui .metric { padding: 12px; }
+  .system-ui .metric .text-2xl { font-size: 20px; }
+  .system-ui .metric p { overflow-wrap: anywhere; }
+}
+@media print { .system-navigation { display: none !important; } }
+
 @utility input {
   display: block;
   width: 100%;

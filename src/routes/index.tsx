@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { QrCode, Star, Smartphone, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,21 +28,20 @@ function Home() {
   const { user, loading } = useAuth();
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="system-ui min-h-screen bg-background">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
         <div className="flex items-center gap-2 font-display text-lg font-bold">
           <QrCode className="h-6 w-6 text-primary" />
           Plaquinhas QR
         </div>
-        <Link
+        <Button asChild><Link
           to={user ? "/painel" : "/entrar"}
-          className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
         >
           {loading ? "Verificando..." : user ? "Minha conta" : "Entrar"}
-        </Link>
+        </Link></Button>
       </header>
 
-      <section className="gradient-hero mx-auto max-w-5xl rounded-3xl px-6 py-14 text-center sm:px-10">
+      <section className="mx-auto max-w-5xl border-y border-border px-6 py-14 text-center sm:px-10">
         <p className="text-sm font-semibold uppercase tracking-widest text-primary">
           Avaliações no Google
         </p>
@@ -53,18 +53,16 @@ function Home() {
           Instagram e seu site. Você altera os links quando quiser, sem reimprimir nada.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link
+          <Button asChild size="lg" className="w-full sm:w-auto"><Link
             to={user ? "/painel" : "/entrar"}
-            className="w-full rounded-full bg-primary px-8 py-3 text-base font-semibold text-primary-foreground sm:w-auto"
           >
             {user ? "Acessar meu painel" : "Ativar minha plaquinha"}
-          </Link>
-          <a
+          </Link></Button>
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto"><a
             href="#como-funciona"
-            className="w-full rounded-full border border-border px-8 py-3 text-base font-semibold sm:w-auto"
           >
             Como funciona
-          </a>
+          </a></Button>
         </div>
       </section>
 
@@ -74,7 +72,7 @@ function Home() {
           { icon: QrCode, title: "2. Vincule", text: "Confirme o nome da empresa e a plaquinha é sua." },
           { icon: Star, title: "3. Configure", text: "Cole o link de avaliação do Google e seus canais." },
         ].map((item) => (
-          <div key={item.title} className="surface-card p-6">
+          <div key={item.title} className="border-b border-border py-6">
             <item.icon className="h-7 w-7 text-primary" />
             <h3 className="mt-4 font-display text-lg font-semibold">{item.title}</h3>
             <p className="mt-2 text-sm text-muted-foreground">{item.text}</p>
@@ -83,7 +81,7 @@ function Home() {
       </section>
 
       <section className="mx-auto max-w-5xl px-5 pb-16">
-        <div className="surface-card flex flex-col items-start gap-4 p-7 sm:flex-row sm:items-center">
+        <div className="flex flex-col items-start gap-4 border-t border-border py-7 sm:flex-row sm:items-center">
           <ShieldCheck className="h-8 w-8 text-primary" />
           <div>
             <h3 className="font-display text-lg font-semibold">Seu QR nunca muda</h3>

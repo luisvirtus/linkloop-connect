@@ -1,3 +1,5 @@
+import { RecordsTable } from "@/components/records-table";
+import { SystemEditor, SystemPageHeading } from "@/components/system-page";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -54,8 +56,8 @@ function Sellers() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between"><h1 className="font-display text-2xl font-bold">Vendedores</h1><Button onClick={() => { setForm({ id: "", name: "", email: "", phone: "", contact: emptyContact, active: true }); setShowForm(true); }}><Plus /> Incluir vendedor</Button></div>
-      {showForm ? <div className="surface-card p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3"><SystemPageHeading title="Vendedores" count={data?.length ?? 0} /><Button onClick={() => { setForm({ id: "", name: "", email: "", phone: "", contact: emptyContact, active: true }); setShowForm(true); }}><Plus /> Incluir vendedor</Button></div>
+      <SystemEditor open={showForm} title={form.id ? "Alterar vendedor" : "Novo vendedor"} onClose={() => setShowForm(false)}><div className="surface-card p-6">
         <div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{form.id ? "Alterar vendedor" : "Novo vendedor"}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowForm(false)}><X /></Button></div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <label className="grid gap-1 text-sm font-semibold">Nome<input className="input" maxLength={120} placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
@@ -68,13 +70,13 @@ function Sellers() {
         >
           {form.id ? "Salvar alterações" : "Incluir vendedor"}
         </Button>
-      </div> : null}
+      </div></SystemEditor>
 
       <div className="surface-card p-6">
         <h2 className="font-display text-lg font-bold">Vendedores</h2>
         {isLoading ? <p className="mt-4 text-sm text-muted-foreground">Carregando...</p> : null}
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-sm">
+          <RecordsTable><table className="w-full min-w-[700px] text-left text-sm">
             <thead className="text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="py-2">Nome</th>
@@ -104,7 +106,7 @@ function Sellers() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></RecordsTable>
         </div>
       </div>
     </div>

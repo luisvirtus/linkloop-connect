@@ -1,3 +1,5 @@
+import { RecordsTable } from "@/components/records-table";
+import { SystemPageHeading } from "@/components/system-page";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -23,9 +25,9 @@ function SellerPanel() {
   const { data, isLoading } = useQuery({ queryKey: ["seller"], queryFn: () => fetchDashboard({ data: {} } as never) });
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className="system-ui min-h-screen bg-background">
       <header className="border-b border-border">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-5 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
           <div className="flex items-center gap-2 font-display font-bold">
             <BadgeDollarSign className="h-5 w-5 text-primary" /> Painel do vendedor
           </div>
@@ -33,7 +35,7 @@ function SellerPanel() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-4xl space-y-5 px-5 py-6">
+      <div className="mx-auto max-w-6xl space-y-5 px-5 py-6">
         {isLoading ? <p className="text-sm text-muted-foreground">Carregando...</p> : null}
         {data && !data.seller ? (
           <div className="surface-card p-6 text-sm text-muted-foreground">
@@ -43,52 +45,27 @@ function SellerPanel() {
 
         {data?.seller ? (
           <>
+            <SystemPageHeading title={data.seller.name || "Visão geral"} />
             <div className="grid gap-3 sm:grid-cols-3">
               <Stat label="Plaquinhas vendidas" value={String(data.sales?.length ?? 0)} />
               <Stat label="Comissões a receber" value={brl(data.totals?.pending ?? 0)} />
               <Stat label="Comissões pagas" value={brl(data.totals?.paid ?? 0)} />
             </div>
 
-            <div className="surface-card p-6">
+            <section className="space-y-4">
               <h2 className="font-display text-lg font-bold">Minhas vendas</h2>
-              <div className="mt-4 space-y-2 text-sm">
-                {(data.sales ?? []).map((s: any) => (
-                  <div key={s.id} className="flex items-center justify-between rounded-xl border border-border p-3">
-                    <span>{dateBR(s.created_at ?? s.sold_at)}</span>
-                    <span className="font-semibold">{brl(s.amount)}</span>
-                  </div>
-                ))}
-                {(data.sales ?? []).length === 0 ? <p className="text-muted-foreground">Nenhuma venda ainda.</p> : null}
-              </div>
-            </div>
+              <RecordsTable name="vendas"><table className="w-full min-w-[480px] text-left text-sm"><thead><tr><th>Data</th><th>Valor</th></tr></thead><tbody>{(data.sales ?? []).map((s: any) => <tr key={s.id}><td>{dateBR(s.created_at ?? s.sold_at)}</td><td className="font-semibold">{brl(s.amount)}</td></tr>)}</tbody></table></RecordsTable>
+            </section>
 
-            <div className="surface-card p-6">
+            <section className="space-y-4">
               <h2 className="font-display text-lg font-bold">Comissões</h2>
-              <div className="mt-4 space-y-2 text-sm">
-                {(data.commissions ?? []).map((c: any) => (
-                  <div key={c.id} className="flex items-center justify-between rounded-xl border border-border p-3">
-                    <span>{c.kind === "renewal" ? "Renovação" : "Venda"} · {c.percent}%</span>
-                    <span className="font-semibold">
-                      {brl(c.amount)} · {c.status === "paid" ? "paga" : "pendente"}
-                    </span>
-                  </div>
-                ))}
-                {(data.commissions ?? []).length === 0 ? <p className="text-muted-foreground">Nenhuma comissão ainda.</p> : null}
-              </div>
-            </div>
+              <RecordsTable name="comissões"><table className="w-full min-w-[560px] text-left text-sm"><thead><tr><th>Origem</th><th>Percentual</th><th>Valor</th><th>Situação</th></tr></thead><tbody>{(data.commissions ?? []).map((c: any) => <tr key={c.id}><td>{c.kind === "renewal" ? "Renovação" : "Venda"}</td><td>{c.percent}%</td><td className="font-semibold">{brl(c.amount)}</td><td><span className={`rounded-md px-2 py-1 text-xs font-medium ${c.status === "paid" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>{c.status === "paid" ? "Paga" : "Pendente"}</span></td></tr>)}</tbody></table></RecordsTable>
+            </section>
 
-            <div className="surface-card p-6">
+            <section className="space-y-4">
               <h2 className="font-display text-lg font-bold">Minhas plaquinhas</h2>
-              <div className="mt-4 space-y-2 text-sm">
-                {(data.plates ?? []).map((p: any) => (
-                  <div key={p.id} className="flex items-center justify-between rounded-xl border border-border p-3">
-                    <span className="font-semibold">{p.qr_code}</span>
-                    <div className="flex items-center gap-3"><span className="text-muted-foreground">{PLATE_STATUS_LABEL[p.status] ?? p.status}</span><Button asChild size="sm" variant="outline"><Link to="/imprimir/$plateId" params={{ plateId: p.id }}><Printer /> Imprimir</Link></Button></div>
-                  </div>
-                ))}
-                {(data.plates ?? []).length === 0 ? <p className="text-muted-foreground">Nenhuma plaquinha atribuída.</p> : null}
-              </div>
-            </div>
+              <RecordsTable name="plaquinhas"><table className="w-full min-w-[480px] text-left text-sm"><thead><tr><th>Código</th><th>Situação</th><th>Ações</th></tr></thead><tbody>{(data.plates ?? []).map((p: any) => <tr key={p.id}><td className="font-semibold">{p.qr_code}</td><td>{PLATE_STATUS_LABEL[p.status] ?? p.status}</td><td><Button asChild size="sm" variant="outline"><Link to="/imprimir/$plateId" params={{ plateId: p.id }}><Printer /> Imprimir</Link></Button></td></tr>)}</tbody></table></RecordsTable>
+            </section>
           </>
         ) : null}
       </div>
@@ -98,7 +75,7 @@ function SellerPanel() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="surface-card p-5">
+    <div className="metric p-5">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-2 font-display text-2xl font-bold">{value}</p>
     </div>

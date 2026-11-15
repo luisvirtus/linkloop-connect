@@ -1,3 +1,5 @@
+import { RecordsTable } from "@/components/records-table";
+import { SystemEditor, SystemPageHeading } from "@/components/system-page";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -79,11 +81,7 @@ function Commercial() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <div className="flex items-center gap-2 text-primary"><ReceiptText className="h-5 w-5" /><span className="text-sm font-semibold">Operação comercial</span></div>
-        <h1 className="mt-2 font-display text-2xl font-bold">Comercial</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Acompanhe vendas, vencimentos, recebimentos e valores devidos aos vendedores.</p>
-      </header>
+      <SystemPageHeading title="Comercial" />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Summary icon={ShoppingBag} label="Vendas registradas" value={String(saleRows.length)} loading={sales.isLoading} />
@@ -93,7 +91,7 @@ function Commercial() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2"><Summary icon={HandCoins} label="Comissões pagas" value={brl(totals.commissionsPaid)} loading={commissions.isLoading} /><Summary icon={BadgeCheck} label="Receita líquida recebida" value={brl(totals.netReceived)} loading={payments.isLoading || commissions.isLoading} /></div>
-      {editor ? <CommercialEditor editor={editor} setEditor={setEditor} options={options.data} pending={saveMutation.isPending} onSave={() => saveMutation.mutate()} onClose={() => setEditor(null)} /> : null}
+      {editor ? <SystemEditor open title={editor.id ? "Alterar registro" : "Incluir registro"} onClose={() => setEditor(null)}><CommercialEditor editor={editor} setEditor={setEditor} options={options.data} pending={saveMutation.isPending} onSave={() => saveMutation.mutate()} onClose={() => setEditor(null)} /></SystemEditor> : null}
 
       <Tabs defaultValue="vendas">
         <div className="overflow-x-auto pb-1">
@@ -106,27 +104,27 @@ function Commercial() {
         </div>
 
         <TabsContent value="vendas"><DataPanel title="Histórico de vendas" action={<Button size="sm" onClick={() => openNew("sales")}><Plus /> Incluir venda</Button>} loading={sales.isLoading} error={sales.error} empty={saleRows.length === 0}>
-          <table className="w-full min-w-[860px] text-left text-sm"><TableHead labels={["Data", "Empresa", "QR Code", "Vendedor", "Valor", "Status", "Ações"]} /><tbody>
+          <RecordsTable labels={["Data", "Empresa", "QR Code", "Vendedor", "Valor", "Status", "Ações"]}><table className="w-full min-w-[860px] text-left text-sm"><TableHead labels={["Data", "Empresa", "QR Code", "Vendedor", "Valor", "Status", "Ações"]} /><tbody>
             {saleRows.map((item: any) => <tr key={item.id} className="border-t border-border"><Cell>{dateBR(item.sold_at)}</Cell><Cell strong>{item.company_name}</Cell><Cell>{item.qr_code}</Cell><Cell>{item.seller_name}</Cell><Cell>{brl(item.amount)}</Cell><Cell><Status value={item.payment_status} /></Cell><ActionCell onEdit={() => openEdit("sales", item)} onDelete={() => exclude("sales", item.id)} /></tr>)}
-          </tbody></table>
+          </tbody></table></RecordsTable>
         </DataPanel></TabsContent>
 
         <TabsContent value="assinaturas"><DataPanel title="Assinaturas anuais" action={<Button size="sm" onClick={() => openNew("subscriptions")}><Plus /> Incluir assinatura</Button>} loading={subs.isLoading} error={subs.error} empty={(subs.data ?? []).length === 0}>
-          <table className="w-full min-w-[820px] text-left text-sm"><TableHead labels={["Empresa", "Vendedor da renovação", "Vencimento", "Situação", "Valor", "Ações"]} /><tbody>
+          <RecordsTable labels={["Empresa", "Vendedor da renovação", "Vencimento", "Situação", "Valor", "Ações"]}><table className="w-full min-w-[820px] text-left text-sm"><TableHead labels={["Empresa", "Vendedor da renovação", "Vencimento", "Situação", "Valor", "Ações"]} /><tbody>
             {(subs.data ?? []).map((item: any) => <tr key={item.id} className="border-t border-border"><Cell strong>{item.company_name}</Cell><Cell>{item.seller_name}</Cell><Cell>{dateBR(item.expires_at)}</Cell><Cell><Status value={item.active ? "active" : "expired"} /></Cell><Cell>{brl(item.amount)}</Cell><ActionCell onEdit={() => openEdit("subscriptions", item)} onDelete={() => exclude("subscriptions", item.id)} /></tr>)}
-          </tbody></table>
+          </tbody></table></RecordsTable>
         </DataPanel></TabsContent>
 
         <TabsContent value="pagamentos"><DataPanel title="Pagamentos" action={<Button size="sm" onClick={() => openNew("payments")}><Plus /> Incluir pagamento</Button>} loading={payments.isLoading} error={payments.error} empty={paymentRows.length === 0}>
-          <table className="w-full min-w-[1120px] text-left text-sm"><TableHead labels={["Criado", "Pago em", "Empresa", "Tipo", "Vínculo", "Vendedor da comissão", "Valor", "Status", "Operação", "Ações"]} /><tbody>
+          <RecordsTable labels={["Criado", "Pago em", "Empresa", "Tipo", "Vínculo", "Vendedor da comissão", "Valor", "Status", "Operação", "Ações"]}><table className="w-full min-w-[1120px] text-left text-sm"><TableHead labels={["Criado", "Pago em", "Empresa", "Tipo", "Vínculo", "Vendedor da comissão", "Valor", "Status", "Operação", "Ações"]} /><tbody>
             {paymentRows.map((item: any) => <tr key={item.id} className="border-t border-border"><Cell>{dateBR(item.created_at)}</Cell><Cell>{item.paid_at ? dateBR(item.paid_at) : "—"}</Cell><Cell strong>{item.company_name}</Cell><Cell>{KIND_LABELS[item.kind] ?? item.kind}</Cell><Cell>{item.related_label}</Cell><Cell>{item.kind === "renewal" || item.kind === "subscription" ? item.seller_name ?? "Sem vendedor vinculado" : "—"}</Cell><Cell>{brl(item.amount)}</Cell><Cell><Status value={item.status} /></Cell><Cell>{item.status === "pending" ? <Button variant="outline" size="sm" disabled={confirmMutation.isPending} onClick={() => { if (window.confirm("Confirmar este pagamento? Em assinaturas e renovações, o vencimento será prorrogado por 12 meses e a comissão do vendedor vinculado será criada.")) confirmMutation.mutate(item.id); }}><CircleDollarSign /> Confirmar pagamento</Button> : "—"}</Cell>{item.status === "paid" ? <Cell>Confirmado</Cell> : <ActionCell onEdit={() => openEdit("payments", item)} onDelete={() => exclude("payments", item.id)} />}</tr>)}
-          </tbody></table>
+          </tbody></table></RecordsTable>
         </DataPanel></TabsContent>
 
         <TabsContent value="comissoes"><DataPanel title="Comissões dos vendedores" action={<Button size="sm" onClick={() => openNew("commissions")}><Plus /> Incluir comissão</Button>} loading={commissions.isLoading} error={commissions.error} empty={commissionRows.length === 0}>
-          <table className="w-full min-w-[900px] text-left text-sm"><TableHead labels={["Data", "Vendedor", "Origem", "Valor", "Status", "Pago em", "Referência", "Operação", "Ações"]} /><tbody>
+          <RecordsTable labels={["Data", "Vendedor", "Origem", "Valor", "Status", "Pago em", "Referência", "Operação", "Ações"]}><table className="w-full min-w-[900px] text-left text-sm"><TableHead labels={["Data", "Vendedor", "Origem", "Valor", "Status", "Pago em", "Referência", "Operação", "Ações"]} /><tbody>
             {commissionRows.map((item: any) => <tr key={item.id} className="border-t border-border"><Cell>{dateBR(item.created_at)}</Cell><Cell strong>{item.seller_name}</Cell><Cell>{KIND_LABELS[item.kind] ?? item.kind}</Cell><Cell>{brl(item.amount)}</Cell><Cell><Status value={item.status} /></Cell><Cell>{item.paid_at ? dateBR(item.paid_at) : "—"}</Cell><Cell>{item.payment_reference || "—"}</Cell><Cell>{item.status === "pending" ? <Button variant="outline" size="sm" disabled={payMutation.isPending} onClick={() => { const reference = window.prompt("Referência do pagamento da comissão (Pix, transferência ou recibo):"); if (reference?.trim()) payMutation.mutate({ id: item.id, reference: reference.trim() }); }}><HandCoins /> Marcar paga</Button> : "—"}</Cell>{item.status === "paid" ? <Cell>Confirmada</Cell> : <ActionCell onEdit={() => openEdit("commissions", item)} onDelete={() => exclude("commissions", item.id)} />}</tr>)}
-          </tbody></table>
+          </tbody></table></RecordsTable>
         </DataPanel></TabsContent>
       </Tabs>
     </div>
@@ -134,7 +132,7 @@ function Commercial() {
 }
 
 function Summary({ icon: Icon, label, value, loading }: { icon: typeof ShoppingBag; label: string; value: string; loading: boolean }) {
-  return <div className="surface-card p-5"><div className="flex items-center justify-between"><p className="text-xs font-semibold uppercase text-muted-foreground">{label}</p><Icon className="h-5 w-5 text-primary" /></div><p className="mt-3 font-display text-2xl font-bold">{loading ? "—" : value}</p></div>;
+  return <div className="metric p-5"><div className="flex items-center justify-between"><p className="text-xs font-semibold uppercase text-muted-foreground">{label}</p><Icon className="h-5 w-5 text-primary" /></div><p className="mt-3 font-display text-2xl font-bold">{loading ? "—" : value}</p></div>;
 }
 
 function DataPanel({ title, action, loading, error, empty, children }: { title: string; action?: React.ReactNode; loading: boolean; error: Error | null; empty: boolean; children: React.ReactNode }) {

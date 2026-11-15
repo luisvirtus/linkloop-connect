@@ -1,3 +1,5 @@
+import { RecordsTable } from "@/components/records-table";
+import { SystemEditor, SystemPageHeading } from "@/components/system-page";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -87,8 +89,8 @@ function Stock() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="font-display text-2xl font-bold">Estoque</h1><Button onClick={() => setShowBatch(true)}><Plus /> Incluir lote</Button></div>
-      {showBatch ? <div className="surface-card p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3"><SystemPageHeading title="Estoque" count={data?.plates.length ?? 0} /><Button onClick={() => setShowBatch(true)}><Plus /> Incluir lote</Button></div>
+      <SystemEditor open={showBatch} title="Gerar lote" onClose={() => setShowBatch(false)}><div className="surface-card p-6">
         <div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">Gerar lote</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowBatch(false)}><X /></Button></div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Nome do lote"><input className="input" maxLength={100} placeholder="Ex.: Produção outubro" value={batch.label} onChange={(e) => setBatch({ ...batch, label: e.target.value })} /></Field>
@@ -112,11 +114,11 @@ function Stock() {
         >
           {batchMutation.isPending ? "Gerando..." : "Gerar plaquinhas"}
         </Button>
-      </div> : null}
+      </div></SystemEditor>
 
-      {editing ? <section className="surface-card p-6"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">Alterar plaquinha {editing.qr_code}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setEditing(null)}><X /></Button></div><div className="mt-4 grid gap-3 sm:grid-cols-4"><select className="input" value={editing.status} onChange={e => setEditing({ ...editing, status: e.target.value })}>{STATUSES.map(s => <option key={s} value={s}>{PLATE_STATUS_LABEL[s]}</option>)}</select><select className="input" value={editing.seller_id ?? ""} onChange={e => setEditing({ ...editing, seller_id: e.target.value })}><option value="">Sem vendedor</option>{(data?.sellers ?? []).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</select><input className="input" type="number" min="0" step="0.01" placeholder="Preço" value={editing.price ?? ""} onChange={e => setEditing({ ...editing, price: e.target.value === "" ? null : Number(e.target.value) })} /></div><textarea className="input mt-3 min-h-24" maxLength={1000} placeholder="Observações" value={editing.notes ?? ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} /><Button className="mt-3" disabled={updateMutation.isPending} onClick={() => updateMutation.mutate({ plateId: editing.id, status: editing.status, sellerId: editing.seller_id || null, price: editing.price, notes: editing.notes }, { onSuccess: () => { toast.success("Plaquinha alterada."); setEditing(null); } })}>Salvar alterações</Button></section> : null}
+      {editing ? <SystemEditor open title={`Alterar plaquinha ${editing.qr_code}`} onClose={() => setEditing(null)}><section className="surface-card p-6"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">Alterar plaquinha {editing.qr_code}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setEditing(null)}><X /></Button></div><div className="mt-4 grid gap-3 sm:grid-cols-4"><select className="input" value={editing.status} onChange={e => setEditing({ ...editing, status: e.target.value })}>{STATUSES.map(s => <option key={s} value={s}>{PLATE_STATUS_LABEL[s]}</option>)}</select><select className="input" value={editing.seller_id ?? ""} onChange={e => setEditing({ ...editing, seller_id: e.target.value })}><option value="">Sem vendedor</option>{(data?.sellers ?? []).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</select><input className="input" type="number" min="0" step="0.01" placeholder="Preço" value={editing.price ?? ""} onChange={e => setEditing({ ...editing, price: e.target.value === "" ? null : Number(e.target.value) })} /></div><textarea className="input mt-3 min-h-24" maxLength={1000} placeholder="Observações" value={editing.notes ?? ""} onChange={e => setEditing({ ...editing, notes: e.target.value })} /><Button className="mt-3" disabled={updateMutation.isPending} onClick={() => updateMutation.mutate({ plateId: editing.id, status: editing.status, sellerId: editing.seller_id || null, price: editing.price, notes: editing.notes }, { onSuccess: () => { toast.success("Plaquinha alterada."); setEditing(null); } })}>Salvar alterações</Button></section></SystemEditor> : null}
 
-      <section className="surface-card p-6"><h2 className="font-display text-lg font-bold">Lotes</h2>{batches.isLoading ? <p className="mt-3 text-sm text-muted-foreground">Carregando...</p> : <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead className="text-xs uppercase text-muted-foreground"><tr><th className="py-2">Nome</th><th>Quantidade</th><th>Tamanho</th><th>Criado</th><th>Ações</th></tr></thead><tbody>{(batches.data ?? []).map((item: any) => <tr key={item.id} className="border-t border-border"><td className="py-3 font-semibold">{item.label}</td><td>{item.quantity}</td><td>{PLATE_SIZE_LABEL[item.size]}</td><td>{dateBR(item.created_at)}</td><td><Button variant="ghost" size="icon" aria-label={`Excluir lote ${item.label}`} title="Excluir lote" onClick={() => { if (window.confirm(`Excluir definitivamente o lote ${item.label}? As plaquinhas serão mantidas sem lote.`)) deleteMutation.mutate({ entity: "batches", id: item.id }); }}><Trash2 className="text-destructive" /></Button></td></tr>)}</tbody></table></div>}</section>
+      <section className="surface-card p-6"><h2 className="font-display text-lg font-bold">Lotes</h2>{batches.isLoading ? <p className="mt-3 text-sm text-muted-foreground">Carregando...</p> : <div className="mt-4 overflow-x-auto"><RecordsTable><table className="w-full min-w-[620px] text-left text-sm"><thead className="text-xs uppercase text-muted-foreground"><tr><th className="py-2">Nome</th><th>Quantidade</th><th>Tamanho</th><th>Criado</th><th>Ações</th></tr></thead><tbody>{(batches.data ?? []).map((item: any) => <tr key={item.id} className="border-t border-border"><td className="py-3 font-semibold">{item.label}</td><td>{item.quantity}</td><td>{PLATE_SIZE_LABEL[item.size]}</td><td>{dateBR(item.created_at)}</td><td><Button variant="ghost" size="icon" aria-label={`Excluir lote ${item.label}`} title="Excluir lote" onClick={() => { if (window.confirm(`Excluir definitivamente o lote ${item.label}? As plaquinhas serão mantidas sem lote.`)) deleteMutation.mutate({ entity: "batches", id: item.id }); }}><Trash2 className="text-destructive" /></Button></td></tr>)}</tbody></table></RecordsTable></div>}</section>
 
       <div className="surface-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -129,7 +131,7 @@ function Stock() {
                 <option key={s} value={s}>{PLATE_STATUS_LABEL[s]}</option>
               ))}
             </select>
-            <Link to="/admin/impressao" className="rounded-full border border-border px-4 py-2 text-sm font-semibold">
+            <Link to="/admin/impressao" className="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-semibold">
               Artes para impressão
             </Link>
           </div>
@@ -138,7 +140,7 @@ function Stock() {
         {isLoading ? <p className="mt-4 text-sm text-muted-foreground">Carregando...</p> : null}
 
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <RecordsTable><table className="w-full min-w-[900px] text-left text-sm">
             <thead className="text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="py-2">#</th>
@@ -200,7 +202,7 @@ function Stock() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></RecordsTable>
         </div>
       </div>
     </div>

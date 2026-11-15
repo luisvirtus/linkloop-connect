@@ -31,11 +31,11 @@ function PrintPlate() {
   useEffect(() => setOrigin(window.location.origin), []);
 
   return (
-    <main className="print-page min-h-screen bg-background px-4 py-6 sm:px-8">
+    <main className="system-ui print-page min-h-screen bg-background px-4 py-6 sm:px-8">
       <div className="print-controls mx-auto mb-6 flex max-w-4xl flex-wrap items-center justify-between gap-4">
         <div>
           <Link to="/painel" className="inline-flex items-center gap-2 text-sm font-semibold text-primary"><ArrowLeft className="h-4 w-4" /> Voltar ao painel</Link>
-          <h1 className="mt-2 font-display text-2xl font-bold">Imprimir plaquinha</h1>
+          <h1 className="mt-2 font-display text-2xl font-semibold">Imprimir plaquinha</h1>
           {plate ? <p className="mt-1 text-sm text-muted-foreground">{plate.qrCode} · {PLATE_SIZE_LABEL[plate.size] ?? plate.size}</p> : null}
         </div>
         {plate && origin ? <Button type="button" onClick={() => window.print()}><Printer /> Imprimir plaquinha</Button> : null}

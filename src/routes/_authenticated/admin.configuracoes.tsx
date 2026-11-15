@@ -1,3 +1,4 @@
+import { SystemPageHeading } from "@/components/system-page";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -72,14 +73,10 @@ function Config() {
   if (error) return <p className="text-sm text-destructive">Não foi possível carregar as configurações.</p>;
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <header>
-        <div className="flex items-center gap-2 text-primary"><Settings2 className="h-5 w-5" /><span className="text-sm font-semibold">Parâmetros comerciais</span></div>
-        <h1 className="mt-2 font-display text-2xl font-bold">Configurações do sistema</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Estes valores serão usados nas próximas vendas, assinaturas e comissões.</p>
-      </header>
+    <div className="max-w-4xl space-y-6">
+      <SystemPageHeading title="Configurações" />
 
-      <section className="surface-card p-6">
+      <section className="management-section">
         <div className="flex items-center gap-2">
           <CircleDollarSign className="h-5 w-5 text-primary" />
           <h2 className="font-display text-lg font-bold">Preços</h2>
@@ -107,7 +104,7 @@ function Config() {
         </div>
       </section>
 
-      <section className="surface-card p-6">
+      <section className="management-section">
         <div className="flex items-center gap-2">
           <BadgePercent className="h-5 w-5 text-primary" />
           <h2 className="font-display text-lg font-bold">Comissões</h2>

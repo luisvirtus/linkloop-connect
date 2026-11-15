@@ -1,3 +1,4 @@
+import { SystemPageHeading } from "@/components/system-page";
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -43,7 +44,7 @@ function ClientPanel() {
   });
 
   if (account.isLoading) return <Shell><p className="text-sm text-muted-foreground">Carregando...</p></Shell>;
-  if (account.error) return <Shell><p role="alert" className="text-sm text-destructive">{account.error.message}</p>{search.companyId ? <Link to="/admin/clientes" className="mt-4 inline-flex text-sm font-semibold text-primary">Voltar aos clientes</Link> : null}</Shell>;
+  if (account.error) return <Shell><p role="alert" className="text-destructive">{account.error.message}</p>{search.companyId ? <Link to="/admin/clientes" className="mt-4 inline-flex text-sm font-semibold text-primary">Voltar aos clientes</Link> : null}</Shell>;
 
   const data = account.data;
   if (!data) return <Shell><p className="text-sm text-muted-foreground">Conta não encontrada.</p></Shell>;
@@ -71,28 +72,28 @@ function Shell({
   impersonating?: boolean;
 }) {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="system-ui min-h-screen bg-background">
       <header className="border-b border-border">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-5 py-4">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div className="flex items-center gap-2 font-display font-bold">
             <QrCode className="h-5 w-5 text-primary" /> Minha plaquinha
           </div>
           <div className="flex items-center gap-3 text-sm">
             {isSeller ? <Link to="/vendedor" className="font-semibold text-primary">Vendedor</Link> : null}
             {isAdmin ? <Link to="/admin" className="font-semibold text-primary">Admin</Link> : null}
-            <button
-              className="flex items-center gap-1 text-muted-foreground"
+            <Button
+              variant="ghost" size="sm" className="text-muted-foreground"
               onClick={async () => {
                 await supabase.auth.signOut();
                 window.location.href = "/";
               }}
             >
               <LogOut className="h-4 w-4" /> Sair
-            </button>
+            </Button>
           </div>
         </div>
       </header>
-      <div className="mx-auto max-w-3xl space-y-5 px-5 py-6">
+      <div className="mx-auto max-w-5xl space-y-5 px-5 py-6">
         {impersonating ? (
           <div className="flex items-center justify-between rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm">
             <strong>Modo de suporte: visualizando a conta do cliente</strong>
@@ -116,6 +117,7 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
   const plateName = (id: string) => { const p = data.plates.find((x: any) => x.id === id); return p ? (p.label || p.qr_code) : "Plaquinha"; };
   return (
     <>
+      <SystemPageHeading title={data.company.name} count={data.plates.length} />
       {data.pages?.length > 1 ? (
         <Field label="Página que você está editando">
           <select className="input" value={page?.id} onChange={(e) => setPageId(e.target.value)}>
@@ -143,7 +145,7 @@ function AddonBilling({ companyId }: { companyId: string }) {
   if (!items.length) return null;
   const names = { waiter: "Chamar atendente", menu: "Cardápio" };
   return (
-    <div className="surface-card p-6">
+    <div className="management-section">
       <h2 className="font-display text-lg font-bold">Recursos adicionais</h2>
       <p className="mt-1 text-sm text-muted-foreground">Cobrados à parte da anuidade, por plaquinha vinculada.</p>
       <div className="mt-4 space-y-4">
@@ -151,10 +153,10 @@ function AddonBilling({ companyId }: { companyId: string }) {
           const a = q.data[k];
           const unit = Number(cycle[k] === "monthly" ? a.monthly : a.annual);
           return (
-            <div key={k} className="rounded-xl border border-border p-4">
+            <div key={k} className="rounded-lg border border-border p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-semibold">{names[k]}</p>
-                <span className={a.active ? "text-sm text-primary" : "text-sm text-muted-foreground"}>{a.active ? `Ativo até ${dateBR(a.expiresAt!)}` : "Inativo"}</span>
+                <span className={a.active ? "text-sm text-primary" : "text-sm text-muted-foreground"}>{a.active ? `Ativo até ${dateBR(a.expiresAt ?? "")}` : "Inativo"}</span>
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
                 {(["monthly", "annual"] as const).map((c) => (
@@ -178,18 +180,18 @@ function MenuEditor({ data, active, onChange }: { data: any; active: boolean; on
   const m = useMutation({ mutationFn: () => save({ data: { companyId: data.company.id, pageId: data.page.id, enabled, items } }), onSuccess: () => { toast.success("Cardápio salvo."); onChange(); }, onError: (e: Error) => toast.error(e.message) });
   const set = (i: number, k: string, v: any) => setItems((s) => s.map((it, j) => (j === i ? { ...it, [k]: v } : it)));
   return (
-    <div className="surface-card p-6">
+    <div className="management-section">
       <h2 className="font-display text-lg font-bold">Cardápio (opcional)</h2>
       <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={enabled} disabled={!active} onChange={(e) => setEnabled(e.target.checked)} /> Mostrar cardápio na página e receber pedidos pelo WhatsApp</label>
       {enabled ? (
         <div className="mt-4 space-y-3">
           <p className="text-xs text-muted-foreground">Os pedidos vão para o número do item "Chamar atendente" ou, se não houver, do WhatsApp.</p>
           {items.map((it, i) => (
-            <div key={i} className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-[1fr_1.5fr_0.8fr_auto]">
+            <div key={i} className="grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-[1fr_1.5fr_0.8fr_auto]">
               <input className="input" aria-label="Categoria" placeholder="Categoria" value={it.c ?? ""} disabled={!active} onChange={(e) => set(i, "c", e.target.value)} />
               <input className="input" aria-label="Item" placeholder="Nome do item" value={it.n ?? ""} disabled={!active} onChange={(e) => set(i, "n", e.target.value)} />
               <input className="input" aria-label="Preço" type="number" min={0} step="0.01" placeholder="Preço" value={it.p ?? ""} disabled={!active} onChange={(e) => set(i, "p", e.target.value)} />
-              <button className="text-sm text-destructive" disabled={!active} onClick={() => setItems((s) => s.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></button>
+              <Button variant="ghost" size="icon" aria-label="Excluir item do cardápio" className="text-destructive" disabled={!active} onClick={() => setItems((s) => s.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4" /></Button>
               <input className="input sm:col-span-4" aria-label="Descrição" placeholder="Descrição (opcional)" value={it.d ?? ""} disabled={!active} onChange={(e) => set(i, "d", e.target.value)} />
             </div>
           ))}
@@ -293,22 +295,22 @@ function CompanyPanelInner({ data, onChange }: { data: any; onChange: () => void
     <>
       <section className="border-b border-border pb-6"><h2 className="mb-4 font-display text-lg font-bold">Dados de cadastro</h2><ContactFields value={contact} onChange={setContact} /><Button className="mt-4" disabled={contactMutation.isPending} onClick={() => contactMutation.mutate()}>Salvar cadastro</Button></section>
       {!data.subscriptionActive && !data.impersonating ? (
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-5">
           <p className="font-semibold text-destructive">Assinatura vencida</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Para alterar as informações da sua página, é necessário renovar sua assinatura. Sua página
             pública continua no ar e nada foi apagado.
           </p>
-          <button
-            className="mt-4 rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+          <Button
+            className="mt-4"
             onClick={() => renewMutation.mutate()}
           >
             Renovar agora
-          </button>
+          </Button>
         </div>
       ) : null}
 
-      <div className="surface-card p-6">
+      <div className="management-section">
         <h2 className="font-display text-lg font-bold">Sua página</h2>
         <div className="mt-4 space-y-3">
           <Field label="Nome da empresa">
@@ -326,17 +328,16 @@ function CompanyPanelInner({ data, onChange }: { data: any; onChange: () => void
           <Field label="Site">
             <input className="input" value={website} disabled={!active} onChange={(e) => setWebsite(e.target.value)} />
           </Field>
-          <button
-            className="rounded-full bg-primary px-6 py-2.5 font-semibold text-primary-foreground disabled:opacity-60"
+          <Button
             disabled={!active || saveMutation.isPending}
             onClick={() => saveMutation.mutate()}
           >
             Salvar
-          </button>
+          </Button>
         </div>
       </div>
 
-      <div className="surface-card p-6">
+      <div className="management-section">
         <h2 className="font-display text-lg font-bold">Seus links</h2>
         <div className="mt-4 space-y-3">
           {data.links.map((l: any) => (
@@ -387,11 +388,11 @@ function CompanyPanelInner({ data, onChange }: { data: any; onChange: () => void
       <AddonBilling companyId={data.company.id} />
       {data.page ? <MenuEditor data={data} active={active} onChange={onChange} /> : null}
 
-      <div className="surface-card p-6">
+      <div className="management-section">
         <h2 className="font-display text-lg font-bold">Plaquinhas</h2>
         <div className="mt-4 space-y-3">
           {data.plates.map((p: any) => (
-            <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border p-4">
+            <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-4">
               <div>
                 <p className="font-semibold">{p.label ? `${p.label} · ` : ""}{p.qr_code}</p>
                 <p className="text-xs text-muted-foreground">
@@ -405,12 +406,12 @@ function CompanyPanelInner({ data, onChange }: { data: any; onChange: () => void
                   Ver página
                 </a>
                  <Button asChild variant="outline" size="sm" title={`Imprimir ${p.qr_code}`}><Link to="/imprimir/$plateId" params={{ plateId: p.id }}><Printer /> Imprimir</Link></Button>
-                <button
-                  className="flex items-center gap-1 rounded-full border border-border px-4 py-2 text-sm font-semibold"
+                <Button
+                  variant="outline" size="sm"
                   onClick={() => blockMutation.mutate({ plateId: p.id, blocked: !p.blocked_by_client })}
                 >
                   {p.blocked_by_client ? <><Unlock className="h-4 w-4" /> Desbloquear</> : <><Lock className="h-4 w-4" /> Bloquear</>}
-                </button>
+                </Button>
               </div>
               <PlateRowExtras plate={p} data={data} onChange={onChange} />
             </div>
@@ -418,7 +419,7 @@ function CompanyPanelInner({ data, onChange }: { data: any; onChange: () => void
         </div>
       </div>
 
-      <div className="surface-card p-6">
+      <div className="management-section">
         <h2 className="flex items-center gap-2 font-display text-lg font-bold">
           <Star className="h-5 w-5 text-primary" /> Assinatura
         </h2>
@@ -449,9 +450,9 @@ function ExistingLink({ link, active, onSave, onDelete }: { link: any; active: b
       <span className="text-sm font-semibold">{channel.label}</span>
       <input className="input" aria-label={`Nome de ${channel.label}`} value={label} disabled={!active} onChange={(e) => setLabel(e.target.value)} onBlur={saveIfChanged} />
       <input className="input" aria-label={`Contato de ${channel.label}`} value={value} placeholder={channel.placeholder} inputMode={channel.inputMode} disabled={!active} onChange={(e) => setValue(e.target.value)} onBlur={saveIfChanged} />
-      <button aria-label={`Excluir ${channel.label}`} title="Excluir" disabled={!active} onClick={onDelete} className="text-muted-foreground">
+      <Button aria-label={`Excluir ${channel.label}`} title="Excluir" disabled={!active} onClick={onDelete} variant="ghost" size="icon" className="text-muted-foreground">
         <Trash2 className="h-4 w-4" />
-      </button>
+      </Button>
     </div>
   );
 }

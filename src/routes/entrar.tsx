@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { QrCode } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,20 +71,20 @@ function SignIn() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-5">
-      <div className="surface-card w-full max-w-sm p-8 text-center">
+    <main className="system-ui flex min-h-screen items-center justify-center bg-background px-5">
+      <div className="w-full max-w-sm py-12 text-center">
         <QrCode className="mx-auto h-10 w-10 text-primary" />
         <h1 className="mt-4 font-display text-2xl font-bold">Entrar</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Use sua conta Google. É rápido e não precisa criar senha.
         </p>
-        <button
+        <Button
           onClick={signIn}
           disabled={loading}
-          className="mt-7 w-full rounded-full bg-primary px-6 py-3 text-base font-semibold text-primary-foreground disabled:opacity-60"
+          className="mt-7 w-full" size="lg"
         >
           {loading ? "Abrindo..." : "Continuar com o Google"}
-        </button>
+        </Button>
       </div>
     </main>
   );

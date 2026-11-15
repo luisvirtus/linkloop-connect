@@ -1,3 +1,4 @@
+import { SystemPageHeading } from "@/components/system-page";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -39,10 +40,10 @@ function Printing() {
     <div className="space-y-6">
       <div className="print-controls flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="font-display text-2xl font-bold">Artes para impressão</h1>
+          <SystemPageHeading title="Artes para impressão" />
           <label className="mt-4 block text-sm font-semibold">
             Lote
-            <select className="input mt-1 min-w-72" value={batchId} onChange={(event) => setBatchId(event.target.value)}>
+            <select className="input mt-1 w-full sm:min-w-72" value={batchId} onChange={(event) => setBatchId(event.target.value)}>
               <option value="">Selecione um lote</option>
               {data.map((item: any) => (
                 <option key={item.id} value={item.id}>{item.label} · {item.plates.length} unidades</option>

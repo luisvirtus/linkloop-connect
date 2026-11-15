@@ -1,3 +1,4 @@
+import { SystemPageHeading } from "@/components/system-page";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -29,6 +30,7 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-6">
+      <SystemPageHeading title="Visão geral" />
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Plaquinhas" value={String(data.plates.total)} />
         <Stat label="Disponíveis" value={String(data.plates.byStatus["available"] ?? 0)} />
@@ -40,7 +42,7 @@ function AdminDashboard() {
         <Stat label="Comissões a pagar" value={brl(data.finance.commissionsPending)} />
       </div>
 
-      <div className="surface-card p-6">
+      <div className="management-section">
         <h2 className="font-display text-lg font-bold">Financeiro</h2>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <Line label="Recebimentos confirmados" value={brl(data.finance.revenue)} />
@@ -54,11 +56,11 @@ function AdminDashboard() {
         </div>
       </div>
 
-      <div className="surface-card p-6">
+      <div className="management-section">
         <h2 className="font-display text-lg font-bold">Estoque por status</h2>
         <div className="mt-4 flex flex-wrap gap-2 text-sm">
           {Object.entries(data.plates.byStatus).map(([status, count]) => (
-            <span key={status} className="rounded-full border border-border px-4 py-1.5">
+            <span key={status} className="rounded-md border border-border px-4 py-1.5">
               {PLATE_STATUS_LABEL[status] ?? status}: <strong>{count as number}</strong>
             </span>
           ))}
@@ -70,7 +72,7 @@ function AdminDashboard() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="surface-card p-5">
+    <div className="metric p-5">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className="mt-2 font-display text-2xl font-bold">{value}</p>
     </div>
@@ -79,7 +81,7 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function Line({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="rounded-xl border border-border p-4">
+    <div className="border-b border-border py-4">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
       <p className={`mt-1 ${strong ? "font-display text-xl font-bold text-primary" : "text-lg font-semibold"}`}>{value}</p>
     </div>

@@ -1,3 +1,5 @@
+import { RecordsTable } from "@/components/records-table";
+import { SystemEditor, SystemPageHeading } from "@/components/system-page";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -48,15 +50,11 @@ function Audit() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3"><div>
-        <div className="flex items-center gap-2 text-primary"><ScrollText className="h-5 w-5" /><span className="text-sm font-semibold">Rastreabilidade</span></div>
-        <h1 className="mt-2 font-display text-2xl font-bold">Auditoria</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Acompanhe as ações administrativas e alterações importantes do sistema.</p>
-      </div><Button onClick={() => { setNote({ id: "", text: "" }); setShowNote(true); }}><Plus /> Incluir observação</Button></header>
+      <SystemPageHeading title="Auditoria" count={data?.length ?? 0} action={<Button onClick={() => { setNote({ id: "", text: "" }); setShowNote(true); }}><Plus /> Incluir observação</Button>} />
 
-      {showNote ? <section className="surface-card p-5"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{note.id ? "Alterar observação" : "Nova observação"}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowNote(false)}><X /></Button></div><textarea className="input mt-4 min-h-28" maxLength={1000} placeholder="Descreva a observação administrativa" value={note.text} onChange={e => setNote({ ...note, text: e.target.value })} /><Button className="mt-3" disabled={!note.text.trim() || noteMutation.isPending} onClick={() => noteMutation.mutate()}>{note.id ? "Salvar alteração" : "Incluir observação"}</Button></section> : null}
+      <SystemEditor open={showNote} title={note.id ? "Alterar observação" : "Nova observação"} onClose={() => setShowNote(false)}><section className="surface-card p-5"><div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{note.id ? "Alterar observação" : "Nova observação"}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowNote(false)}><X /></Button></div><textarea className="input mt-4 min-h-28" maxLength={1000} placeholder="Descreva a observação administrativa" value={note.text} onChange={e => setNote({ ...note, text: e.target.value })} /><Button className="mt-3" disabled={!note.text.trim() || noteMutation.isPending} onClick={() => noteMutation.mutate()}>{note.id ? "Salvar alteração" : "Incluir observação"}</Button></section></SystemEditor>
 
-      <div className="surface-card p-5">
+      <div className="border-b border-border pb-4">
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_260px]">
           <label className="relative">
             <span className="sr-only">Buscar no histórico</span>
@@ -75,7 +73,7 @@ function Audit() {
         {error ? <p className="p-6 text-sm text-destructive">Não foi possível carregar o histórico.</p> : null}
         {!isLoading && !error && filtered.length === 0 ? <p className="p-6 text-sm text-muted-foreground">Nenhum registro encontrado.</p> : null}
         {filtered.length > 0 ? <div className="overflow-x-auto">
-          <table className="w-full min-w-[860px] text-left text-sm">
+          <RecordsTable><table className="w-full min-w-[860px] text-left text-sm">
           <thead className="text-xs uppercase text-muted-foreground">
             <tr className="bg-muted/40">
               <th className="px-5 py-3">Data</th>
@@ -101,7 +99,7 @@ function Audit() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></RecordsTable>
         </div> : null}
       </div>
     </div>
