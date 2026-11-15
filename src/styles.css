@@ -194,6 +194,49 @@
 
 /* Scoped to the management experience: public QR pages and printed artwork stay unchanged. */
 .system-ui { --radius: 0.5rem; }
+.system-ui:not(.print-page), .system-editor {
+  --primary: var(--google-blue);
+  --ring: var(--google-blue);
+  --success: oklch(0.5 0.13 147);
+  --destructive: oklch(0.54 0.2 29);
+  --accent: oklch(0.96 0.018 255);
+  --accent-foreground: oklch(0.43 0.15 255);
+  --system-blue: var(--google-blue);
+  --system-red: var(--google-red);
+  --system-yellow: var(--google-yellow);
+  --system-green: var(--google-green);
+  --system-color-strip: linear-gradient(to right, var(--system-blue) 0% 25%, var(--system-red) 25% 50%, var(--system-yellow) 50% 75%, var(--system-green) 75% 100%);
+}
+.dark .system-ui:not(.print-page), .dark .system-editor {
+  --primary: oklch(0.72 0.14 255);
+  --ring: var(--primary);
+  --success: oklch(0.74 0.14 147);
+  --destructive: oklch(0.73 0.16 29);
+  --accent: oklch(0.3 0.03 255);
+  --accent-foreground: oklch(0.9 0.04 255);
+}
+.system-ui:not(.print-page) > header,
+.system-navigation,
+.system-editor { border-top: 4px solid transparent; border-image: var(--system-color-strip) 1; border-image-width: 4px 0 0; }
+.system-ui:not(.print-page):not(:has(> header, > aside)) { border-top: 4px solid transparent; border-image: var(--system-color-strip) 1; }
+.system-navigation nav > a:nth-child(4n + 1) svg { color: var(--system-blue); }
+.system-navigation nav > a:nth-child(4n + 2) svg { color: var(--system-red); }
+.system-navigation nav > a:nth-child(4n + 3) svg { color: var(--system-yellow); }
+.system-navigation nav > a:nth-child(4n) svg { color: var(--system-green); }
+.system-ui .grid > .metric:nth-child(4n + 1) { --metric-color: var(--system-blue); }
+.system-ui .grid > .metric:nth-child(4n + 2) { --metric-color: var(--system-red); }
+.system-ui .grid > .metric:nth-child(4n + 3) { --metric-color: var(--system-yellow); }
+.system-ui .grid > .metric:nth-child(4n) { --metric-color: var(--system-green); }
+.system-ui .grid > .metric { border-left-color: var(--metric-color); }
+.system-ui .metric svg { color: var(--metric-color); }
+.system-ui .management-section > h2,
+.system-ui section > h2 { border-left: 3px solid var(--system-blue); padding-left: 12px; }
+.system-ui .management-section:nth-of-type(4n + 2) > h2,
+.system-ui section:nth-of-type(4n + 2) > h2 { border-left-color: var(--system-red); }
+.system-ui .management-section:nth-of-type(4n + 3) > h2,
+.system-ui section:nth-of-type(4n + 3) > h2 { border-left-color: var(--system-yellow); }
+.system-ui .management-section:nth-of-type(4n) > h2,
+.system-ui section:nth-of-type(4n) > h2 { border-left-color: var(--system-green); }
 .system-ui .surface-card { border-radius: 8px; box-shadow: none; }
 .system-ui .surface-card:has(.records-view) { padding: 0; border: 0; background: transparent; }
 .system-ui .surface-card:has(.records-view) > h2,
@@ -216,7 +259,10 @@
   .system-ui .metric .text-2xl { font-size: 20px; }
   .system-ui .metric p { overflow-wrap: anywhere; }
 }
-@media print { .system-navigation { display: none !important; } }
+@media print {
+  .system-navigation { display: none !important; }
+  .system-ui, .system-editor { border-image: none !important; border-top: 0 !important; }
+}
 
 @utility input {
   display: block;
