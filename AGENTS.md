@@ -19,3 +19,6 @@
 - Financial confirmation functions run with the caller's verified session and lock rows; paid records remain immutable to prevent duplicate or silent reversals.
 - Deprecated cost columns remain historical only; operational totals use confirmed receipts minus paid commissions.
 - New sales create their pending receivable through a database trigger in the same transaction to prevent missing or duplicate receipt records.
+- Administrator company removal uses an authenticated atomic database function to retire the company, cancel its QR plates and delete public pages while preserving financial references.
+- Keep the company-removal caller in a browser-safe module so failure propagation and the single transactional call can be tested without server transforms.
+- Print artwork uses explicit physical dimensions on a single A4 page context; avoid named child page contexts that generate empty pages around ancestor layouts.

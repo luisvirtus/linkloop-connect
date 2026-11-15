@@ -85,6 +85,13 @@
       "when": 1794781922502,
       "tag": "0011_addon_modules_billing",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794784519895,
+      "tag": "0012_atomic_company_removal_and_plate_invalidation",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { parseContact, type Contact } from "@/lib/registration";
 import { financialTotals } from "@/lib/commercial-rules";
+import { removeCompany } from "@/lib/company-removal";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function requireAdmin(context: any) {
@@ -234,6 +235,7 @@ export const listCompanies = createServerFn({ method: "POST" })
     const { data: companies } = await db
       .from("companies")
       .select("id, name, website_url, owner_id, created_at, contact")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
     const [{ data: profiles }, { data: subs }, { data: plates }] = await Promise.all([
       db.from("profiles").select("id, email, full_name"),
@@ -261,7 +263,7 @@ export const listAdminOptions = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const db = await requireAdmin(context);
     const [{ data: companies }, { data: profiles }, { data: plates }, { data: sellers }, { data: subscriptions }, { data: sales }] = await Promise.all([
-      db.from("companies").select("id, name").order("name"),
+      db.from("companies").select("id, name").is("deleted_at", null).order("name"),
       db.from("profiles").select("id, email, full_name").order("email"),
       db.from("plates").select("id, qr_code, company_id").order("serial"),
       db.from("sellers").select("id, name").order("name"),
@@ -301,22 +303,7 @@ export const deleteAdminRecord = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
     if (data.entity === "companies") {
-      const [{ data: sales }, { data: subs }] = await Promise.all([
-        db.from("sales").select("id").eq("company_id", data.id),
-        db.from("subscriptions").select("id").eq("company_id", data.id),
-      ]);
-      const saleIds = (sales ?? []).map((item: any) => item.id);
-      const subIds = (subs ?? []).map((item: any) => item.id);
-      if (saleIds.length) await db.from("commissions").delete().in("sale_id", saleIds);
-      if (subIds.length) await db.from("commissions").delete().in("subscription_id", subIds);
-      await db.from("payments").delete().eq("company_id", data.id);
-      await db.from("sales").delete().eq("company_id", data.id);
-      await db.from("subscriptions").delete().eq("company_id", data.id);
-      const { data: pages } = await db.from("pages").select("id").eq("company_id", data.id);
-      const pageIds = (pages ?? []).map((item: any) => item.id);
-      if (pageIds.length) await db.from("page_links").delete().in("page_id", pageIds);
-      await db.from("pages").delete().eq("company_id", data.id);
-      await db.from("plates").delete().eq("company_id", data.id);
+      return removeCompany(context.supabase, data.id);
     }
     if (data.entity === "payments") {
       const { data: pay } = await db.from("payments").select("status").eq("id", data.id).maybeSingle();

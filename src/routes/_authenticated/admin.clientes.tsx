@@ -44,11 +44,15 @@ function Clients() {
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => remove({ data: { entity: "companies", id } }),
-    onSuccess: () => { toast.success("Cliente excluído definitivamente."); refresh(); },
+    onSuccess: async (_, id) => {
+      qc.setQueryData(["admin", "companies"], (rows: any[] | undefined) => rows?.filter(c => c.id !== id));
+      await Promise.all([refresh(), qc.invalidateQueries({ queryKey: ["account"] }), qc.invalidateQueries({ queryKey: ["public-page"] })]);
+      toast.success("Cliente excluído e plaquinhas invalidadas.");
+    },
     onError: (e: Error) => toast.error(e.message),
   });
   const edit = (c: any) => { setForm({ id: c.id, name: c.name, ownerId: c.owner_id, websiteUrl: c.website_url ?? "", contact: { ...emptyContact, ...c.contact } }); setShowForm(true); };
-  const exclude = (c: any) => { if (window.confirm(`Excluir definitivamente ${c.name}? Plaquinhas, páginas e histórico financeiro vinculados também poderão ser apagados.`)) deleteMutation.mutate(c.id); };
+  const exclude = (c: any) => { if (window.confirm(`Excluir ${c.name}? Todas as plaquinhas vinculadas serão invalidadas e suas páginas removidas. O histórico financeiro será preservado.`)) deleteMutation.mutate(c.id); };
 
   return (
     <div className="space-y-5">

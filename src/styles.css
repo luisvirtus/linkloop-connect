@@ -230,9 +230,9 @@
   .print-sheet { display: block !important; }
   .print-sheet .plate-print-art { margin: 0 auto; border: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; break-after: page; break-inside: avoid; }
   .print-sheet .plate-print-art:last-child { break-after: auto; }
-  .print-sheet .plate-print-small { width: 100mm; page: plateSmall; }
-  .print-sheet .plate-print-medium { width: 150mm; page: plateMedium; }
-  .print-sheet .plate-print-large { width: 200mm; page: plateLarge; }
+  .print-sheet .plate-print-small { width: 100mm; height: 100mm; }
+  .print-sheet .plate-print-medium { width: 150mm; height: 150mm; }
+  .print-sheet .plate-print-large { width: 200mm; height: 200mm; }
 }
 
 /* The artwork keeps the same geometry at preview and at its physical print size. */
@@ -277,13 +277,15 @@
 .plate-print-business span { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
 
 @media print {
-  @page plateSmall { size: 100mm 100mm; margin: 0; }
-  @page plateMedium { size: 150mm 150mm; margin: 0; }
-  @page plateLarge { size: 200mm 200mm; margin: 0; }
+  @page { size: A4; margin: 0; }
+  html, body { margin: 0 !important; padding: 0 !important; min-height: 0 !important; }
+  body:has(.print-sheet) main,
+  body:has(.print-sheet) main > div { min-height: 0 !important; margin: 0 !important; padding: 0 !important; max-width: none !important; }
+  .print-sheet { margin: 0 !important; padding: 0 !important; }
   .print-page { min-height: 0 !important; padding: 0 !important; background: var(--card); }
   .print-preview { max-width: none !important; }
   .print-page .plate-print-art { margin: 0; border: 0; print-color-adjust: exact; -webkit-print-color-adjust: exact; break-inside: avoid; }
-  .print-page .plate-print-small { width: 100mm; page: plateSmall; }
-  .print-page .plate-print-medium { width: 150mm; page: plateMedium; }
-  .print-page .plate-print-large { width: 200mm; page: plateLarge; }
+  .print-page .plate-print-small { width: 100mm; height: 100mm; }
+  .print-page .plate-print-medium { width: 150mm; height: 150mm; }
+  .print-page .plate-print-large { width: 200mm; height: 200mm; }
 }

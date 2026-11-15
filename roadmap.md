@@ -1,8 +1,8 @@
 # Roadmap — Plaquinhas QR
 
-- [ ] Corrigir páginas em branco na impressão individual e por lote
-- [ ] Excluir cliente da lista e invalidar suas plaquinhas sem apagar financeiro confirmado
-- [ ] Validar impressão e exclusão no navegador
+- [x] Corrigir páginas em branco na impressão individual e por lote
+- [x] Excluir cliente da lista e invalidar suas plaquinhas sem apagar financeiro confirmado
+- [x] Validar impressão e exclusão no navegador
 
 - [x] Ativação direta pelo QR com cadastro e aceite anual
 - [x] Cadastro de contato, CPF/CNPJ e endereço de clientes e vendedores

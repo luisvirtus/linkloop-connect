@@ -58,6 +58,7 @@ async function loadAccount(supabase: any, userId: string, companyId?: string | n
       .from("companies")
       .select("id, name, website_url, logo_url, contact")
       .eq("id", companyId)
+      .is("deleted_at", null)
       .maybeSingle();
     company = data ?? null;
   } else {
@@ -65,6 +66,7 @@ async function loadAccount(supabase: any, userId: string, companyId?: string | n
       .from("companies")
       .select("id, name, website_url, logo_url, contact")
       .eq("owner_id", userId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();

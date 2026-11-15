@@ -202,6 +202,7 @@ export type Database = {
         Row: {
           contact: Json
           created_at: string
+          deleted_at: string | null
           id: string
           logo_url: string | null
           name: string
@@ -212,6 +213,7 @@ export type Database = {
         Insert: {
           contact?: Json
           created_at?: string
+          deleted_at?: string | null
           id?: string
           logo_url?: string | null
           name: string
@@ -222,6 +224,7 @@ export type Database = {
         Update: {
           contact?: Json
           created_at?: string
+          deleted_at?: string | null
           id?: string
           logo_url?: string | null
           name?: string
@@ -806,6 +809,7 @@ export type Database = {
         }[]
       }
       public_plate_state: { Args: { _code: string }; Returns: Json }
+      remove_company: { Args: { _company_id: string }; Returns: Json }
       request_addon: {
         Args: { _addon: string; _company_id: string; _cycle: string }
         Returns: Json
