@@ -23,3 +23,4 @@
 - Keep the company-removal caller in a browser-safe module so failure propagation and the single transactional call can be tested without server transforms.
 - Use shared company-state guards for active operations and printable status; exclude cancelled QR artwork but retain settled financial history in reporting.
 - Print artwork uses explicit physical dimensions on a single A4 page context; avoid named child page contexts that generate empty pages around ancestor layouts.
+- Client administration uses local table controls and the shared Sheet for details and editing; existing authenticated operations remain unchanged to separate presentation from business rules.

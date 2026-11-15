@@ -1,5 +1,8 @@
 # Roadmap — Plaquinhas QR
 
+- [x] Renovar tela de Clientes seguindo a referência CRUD Companies, preservando as ações existentes
+- [x] Conferir busca, filtros, formulário e navegação em computador e celular
+
 - [x] Conferir exclusão nos resumos, suporte, editor, novas cobranças e reativação de QR
 - [x] Impedir impressão individual e por lote de plaquinhas canceladas
 - [x] Validar caminhos relacionados sem alterar registros financeiros concluídos
