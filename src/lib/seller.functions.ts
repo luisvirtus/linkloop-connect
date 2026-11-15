@@ -27,6 +27,7 @@ export const getSellerDashboard = createServerFn({ method: "POST" })
       .from("plates")
       .select("id, serial, qr_code, status, linked_at")
       .eq("seller_id", seller.id)
+      .neq("status", "cancelled")
       .order("serial", { ascending: true });
 
     const { data: companyNames, error: companyError } = await context.supabase.rpc("seller_company_names");

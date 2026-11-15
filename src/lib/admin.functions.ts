@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { parseContact, type Contact } from "@/lib/registration";
 import { financialTotals } from "@/lib/commercial-rules";
 import { removeCompany } from "@/lib/company-removal";
+import { isPrintablePlate, requireActiveCompany } from "@/lib/company-state";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 async function requireAdmin(context: any) {
@@ -36,7 +37,7 @@ export const getAdminDashboard = createServerFn({ method: "POST" })
     const db = await requireAdmin(context);
     const [plates, companies, subs, sales, payments, commissions, settings] = await Promise.all([
       db.from("plates").select("status, cost, blocked_by_admin, blocked_by_client"),
-      db.from("companies").select("id"),
+      db.from("companies").select("id").is("deleted_at", null),
       db.from("subscriptions").select("status, expires_at, amount"),
       db.from("sales").select("amount, cost, payment_status"),
       db.from("payments").select("amount, status, kind, sale_id"),
@@ -142,7 +143,7 @@ export const listBatches = createServerFn({ method: "POST" })
     return (batches ?? []).map((batch: any) => ({
       ...batch,
       plates: (plates ?? [])
-        .filter((plate: any) => plate.batch_id === batch.id)
+        .filter((plate: any) => plate.batch_id === batch.id && isPrintablePlate(plate.status))
         .map((plate: any) => ({ ...plate, company_name: plate.company_id ? companyMap[plate.company_id] ?? null : null })),
     }));
   });
@@ -286,6 +287,8 @@ export const saveCompany = createServerFn({ method: "POST" })
     const payload = { name: data.name, owner_id: data.ownerId, website_url: data.websiteUrl, contact: parseContact(data.contact) };
     let id = data.id ?? null;
     if (id) {
+      const { data: company } = await db.from("companies").select("deleted_at").eq("id", id).maybeSingle();
+      requireActiveCompany(company);
       const { error } = await db.from("companies").update(payload).eq("id", id);
       if (error) throw new Error(error.message);
     } else {
@@ -386,6 +389,10 @@ export const saveCommercialRecord = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
     const v: any = data.values;
+    if (v.company_id) {
+      const { data: company } = await db.from("companies").select("deleted_at").eq("id", v.company_id).maybeSingle();
+      requireActiveCompany(company);
+    }
     let payload: any;
     if (data.entity === "sales") {
       if (!v.plate_id || !v.company_id) throw new Error("Selecione a empresa e a plaquinha.");

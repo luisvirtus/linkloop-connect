@@ -92,6 +92,13 @@
       "when": 1794784519895,
       "tag": "0012_atomic_company_removal_and_plate_invalidation",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794784814107,
+      "tag": "0013_retired_company_guards",
+      "breakpoints": true
     }
   ]
 }

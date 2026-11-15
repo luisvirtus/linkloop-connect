@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isPrintablePlate } from "@/lib/company-state";
 
 export const getPrintablePlate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -10,10 +11,11 @@ export const getPrintablePlate = createServerFn({ method: "POST" })
     }
     const { data: plate, error } = await context.supabase
       .from("plates")
-      .select("id, qr_code, size, company_id, seller_id")
+      .select("id, qr_code, size, status, company_id, seller_id")
       .eq("id", data.plateId)
       .maybeSingle();
     if (error || !plate) throw new Error("Plaquinha não encontrada ou sem permissão.");
+    if (!isPrintablePlate(plate.status)) throw new Error("Esta plaquinha foi invalidada e não pode ser impressa.");
 
     const [{ data: isAdmin }, { data: seller }, { data: company }] = await Promise.all([
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),

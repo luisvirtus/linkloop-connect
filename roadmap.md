@@ -1,5 +1,9 @@
 # Roadmap — Plaquinhas QR
 
+- [x] Conferir exclusão nos resumos, suporte, editor, novas cobranças e reativação de QR
+- [x] Impedir impressão individual e por lote de plaquinhas canceladas
+- [x] Validar caminhos relacionados sem alterar registros financeiros concluídos
+
 - [x] Corrigir páginas em branco na impressão individual e por lote
 - [x] Excluir cliente da lista e invalidar suas plaquinhas sem apagar financeiro confirmado
 - [x] Validar impressão e exclusão no navegador

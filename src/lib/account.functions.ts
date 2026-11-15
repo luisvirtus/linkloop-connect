@@ -61,6 +61,7 @@ async function loadAccount(supabase: any, userId: string, companyId?: string | n
       .is("deleted_at", null)
       .maybeSingle();
     company = data ?? null;
+    if (!company) throw new Error("Cliente excluído ou não encontrado.");
   } else {
     const { data } = await supabase
       .from("companies")
@@ -158,7 +159,7 @@ export const getPlateByCode = createServerFn({ method: "POST" })
     if (!plate) return { found: false as const };
     const mine = plate.company_id
       ? !!(
-          await context.supabase.from("companies").select("id").eq("id", plate.company_id).maybeSingle()
+          await context.supabase.from("companies").select("id").eq("id", plate.company_id).is("deleted_at", null).maybeSingle()
         ).data
       : false;
     return {
@@ -192,7 +193,7 @@ export const saveAccountContact = createServerFn({ method: "POST" })
   .inputValidator((data: { companyId: string; contact: Contact }) => data)
   .handler(async ({ data, context }) => {
     const contact = parseContact(data.contact);
-    const { data: company, error } = await context.supabase.from("companies").update({ contact }).eq("id", data.companyId).select("id").single();
+    const { data: company, error } = await context.supabase.from("companies").update({ contact }).eq("id", data.companyId).is("deleted_at", null).select("id").single();
     if (error || !company) throw new Error("Não foi possível salvar o cadastro.");
     return { ok: true };
   });
@@ -203,6 +204,6 @@ export const getQrOwner = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: plate } = await context.supabase.from("plates").select("company_id").eq("qr_code", data.code).maybeSingle();
     if (!plate?.company_id) return { owner: false };
-    const { data: company } = await context.supabase.from("companies").select("id").eq("id", plate.company_id).eq("owner_id", context.userId).maybeSingle();
+    const { data: company } = await context.supabase.from("companies").select("id").eq("id", plate.company_id).eq("owner_id", context.userId).is("deleted_at", null).maybeSingle();
     return { owner: !!company };
   });

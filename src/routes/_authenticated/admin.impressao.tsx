@@ -50,7 +50,7 @@ function Printing() {
             </select>
           </label>
         </div>
-        <Button onClick={() => window.print()} disabled={!batch || !origin}>
+        <Button onClick={() => window.print()} disabled={!batch?.plates.length || !origin}>
           <Printer /> Imprimir lote
         </Button>
       </div>

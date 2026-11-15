@@ -43,7 +43,7 @@ function ClientPanel() {
   });
 
   if (account.isLoading) return <Shell><p className="text-sm text-muted-foreground">Carregando...</p></Shell>;
-  if (account.error) return <Shell><p className="text-sm text-destructive">Não foi possível carregar seus dados.</p></Shell>;
+  if (account.error) return <Shell><p role="alert" className="text-sm text-destructive">{account.error.message}</p>{search.companyId ? <Link to="/admin/clientes" className="mt-4 inline-flex text-sm font-semibold text-primary">Voltar aos clientes</Link> : null}</Shell>;
 
   const data = account.data;
   if (!data) return <Shell><p className="text-sm text-muted-foreground">Conta não encontrada.</p></Shell>;

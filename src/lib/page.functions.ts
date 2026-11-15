@@ -1,10 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { LINK_CHANNELS, normalizeLinkValue, normalizeOptionalWebUrl } from "@/lib/link-channels";
+import { requireActiveCompany } from "@/lib/company-state";
 
 const EXPIRED_MSG = "Para alterar as informações da sua página, é necessário renovar sua assinatura.";
 
 async function assertCanEdit(supabase: any, userId: string, companyId: string) {
+  const { data: activeCompany } = await supabase.from("companies").select("deleted_at").eq("id", companyId).maybeSingle();
+  requireActiveCompany(activeCompany);
   const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
   if (!isAdmin) {
     const { data: company } = await supabase
@@ -155,7 +158,9 @@ export const setPlateBlock = createServerFn({ method: "POST" })
       .select("id, company_id")
       .eq("id", data.plateId)
       .maybeSingle();
-    if (!plate) throw new Error("Plaquinha não encontrada.");
+    if (!plate || !plate.company_id) throw new Error("Plaquinha não encontrada.");
+    const { data: activeCompany } = await context.supabase.from("companies").select("deleted_at").eq("id", plate.company_id).maybeSingle();
+    requireActiveCompany(activeCompany);
     const { data: isAdmin } = await context.supabase.rpc("has_role", {
       _user_id: context.userId,
       _role: "admin",
@@ -164,7 +169,7 @@ export const setPlateBlock = createServerFn({ method: "POST" })
       const { data: company } = await context.supabase
         .from("companies")
         .select("id")
-        .eq("id", plate.company_id!)
+        .eq("id", plate.company_id)
         .eq("owner_id", context.userId)
         .maybeSingle();
       if (!company) throw new Error("Acesso negado.");
@@ -189,6 +194,7 @@ export const requestRenewal = createServerFn({ method: "POST" })
       .from("companies")
       .select("id")
       .eq("id", data.companyId)
+      .is("deleted_at", null)
       .maybeSingle();
     if (!company) throw new Error("Acesso negado.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -229,6 +235,8 @@ export const requestRenewal = createServerFn({ method: "POST" })
   });
 
 async function assertPlateOfCompany(supabase: any, plateId: string, companyId: string) {
+  const { data: company } = await supabase.from("companies").select("deleted_at").eq("id", companyId).maybeSingle();
+  requireActiveCompany(company);
   const { data: plate } = await supabase.from("plates").select("id").eq("id", plateId).eq("company_id", companyId).maybeSingle();
   if (!plate) throw new Error("Plaquinha não encontrada.");
 }

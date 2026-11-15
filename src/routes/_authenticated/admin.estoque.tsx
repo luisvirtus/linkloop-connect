@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createBatch, deleteAdminRecord, listBatches, listPlates, unlinkPlate, updatePlate } from "@/lib/admin.functions";
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { isPrintablePlate } from "@/lib/company-state";
 import { Pencil, Plus, Printer, Trash2, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/estoque")({
@@ -182,7 +183,7 @@ function Stock() {
                   </td>
                   <td>{dateBR(p.generated_at)}</td>
                   <td className="space-x-2 whitespace-nowrap">
-                     <Button asChild variant="ghost" size="icon" title={`Imprimir ${p.qr_code}`} aria-label={`Imprimir ${p.qr_code}`}><Link to="/imprimir/$plateId" params={{ plateId: p.id }}><Printer /></Link></Button>
+                    {isPrintablePlate(p.status) ? <Button asChild variant="ghost" size="icon" title={`Imprimir ${p.qr_code}`} aria-label={`Imprimir ${p.qr_code}`}><Link to="/imprimir/$plateId" params={{ plateId: p.id }}><Printer /></Link></Button> : <Button variant="ghost" size="icon" disabled title="Plaquinha invalidada" aria-label={`Imprimir ${p.qr_code}`}><Printer /></Button>}
                     <Button variant="ghost" size="icon" title="Alterar plaquinha" aria-label={`Alterar ${p.qr_code}`} onClick={() => setEditing(p)}><Pencil /></Button>
                     <Button variant="link" size="sm"
                       onClick={() => updateMutation.mutate({ plateId: p.id, blockedByAdmin: !p.blocked_by_admin })}
