@@ -35,6 +35,7 @@ function Config() {
     subscription_price: 0,
     commission_sale_percent: 0,
     commission_renewal_percent: 0,
+    waiter_monthly_price: 0, waiter_annual_price: 0, menu_monthly_price: 0, menu_annual_price: 0,
   });
 
   useEffect(() => {
@@ -43,6 +44,8 @@ function Config() {
       subscription_price: Number(data.subscription_price),
       commission_sale_percent: Number(data.commission_sale_percent),
       commission_renewal_percent: Number(data.commission_renewal_percent),
+      waiter_monthly_price: Number(data.waiter_monthly_price ?? 0), waiter_annual_price: Number(data.waiter_annual_price ?? 0),
+      menu_monthly_price: Number(data.menu_monthly_price ?? 0), menu_annual_price: Number(data.menu_annual_price ?? 0),
     });
   }, [data]);
 
@@ -88,6 +91,19 @@ function Config() {
           <Field label="Valor da Anuidade (R$)">
             <input type="number" min="0" step="0.01" className="input" value={form.subscription_price} onChange={e => setForm({...form, subscription_price: Number(e.target.value)})} />
           </Field>
+          <Field label="Chamar atendente — mensal por plaquinha (R$)">
+            <input type="number" min="0" step="0.01" className="input" value={form.waiter_monthly_price} onChange={e => setForm({...form, waiter_monthly_price: Number(e.target.value)})} />
+          </Field>
+          <Field label="Chamar atendente — anual por plaquinha (R$)">
+            <input type="number" min="0" step="0.01" className="input" value={form.waiter_annual_price} onChange={e => setForm({...form, waiter_annual_price: Number(e.target.value)})} />
+          </Field>
+          <Field label="Cardápio — mensal por plaquinha (R$)">
+            <input type="number" min="0" step="0.01" className="input" value={form.menu_monthly_price} onChange={e => setForm({...form, menu_monthly_price: Number(e.target.value)})} />
+          </Field>
+          <Field label="Cardápio — anual por plaquinha (R$)">
+            <input type="number" min="0" step="0.01" className="input" value={form.menu_annual_price} onChange={e => setForm({...form, menu_annual_price: Number(e.target.value)})} />
+          </Field>
+          <p className="text-xs text-muted-foreground sm:col-span-2">Recursos adicionais: valor multiplicado pelas plaquinhas vinculadas. Deixe 0 para liberar sem cobrança.</p>
         </div>
       </section>
 

@@ -8,7 +8,7 @@ import { PlateActivation } from "@/components/plate-activation";
 import { ContactFields } from "@/components/contact-fields";
 import { emptyContact } from "@/lib/registration";
 import { getAccount, saveAccountContact } from "@/lib/account.functions";
-import { savePage, saveLink, deleteLink, setPlateBlock, requestRenewal, setPlateLabel, setPlateCustomPage, saveMenu } from "@/lib/page.functions";
+import { savePage, saveLink, deleteLink, setPlateBlock, requestRenewal, setPlateLabel, setPlateCustomPage, saveMenu, getAddons, requestAddon } from "@/lib/page.functions";
 import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { channelFor, editableLinkValue, LINK_CHANNELS, normalizeLinkValue } from "@/lib/link-channels";
@@ -125,6 +125,49 @@ function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
       ) : null}
       <CompanyPanelInner key={page?.id} data={{ ...data, page, links: page?.links ?? [] }} onChange={onChange} />
     </>
+  );
+}
+
+function AddonBilling({ companyId }: { companyId: string }) {
+  const load = useServerFn(getAddons);
+  const req = useServerFn(requestAddon);
+  const q = useQuery({ queryKey: ["addons", companyId], queryFn: () => load({ data: { companyId } }) });
+  const [cycle, setCycle] = useState<Record<"waiter" | "menu", "monthly" | "annual">>({ waiter: "monthly", menu: "monthly" });
+  const m = useMutation({
+    mutationFn: (addon: "waiter" | "menu") => req({ data: { companyId, addon, cycle: cycle[addon] } }),
+    onSuccess: (r) => { toast.success(r.alreadyPending ? "Já existe um pedido aguardando pagamento." : "Pedido registrado. Em breve confirmaremos o pagamento."); q.refetch(); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  if (!q.data) return null;
+  const items = (["waiter", "menu"] as const).filter((k) => !q.data[k]?.free);
+  if (!items.length) return null;
+  const names = { waiter: "Chamar atendente", menu: "Cardápio" };
+  return (
+    <div className="surface-card p-6">
+      <h2 className="font-display text-lg font-bold">Recursos adicionais</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Cobrados à parte da anuidade, por plaquinha vinculada.</p>
+      <div className="mt-4 space-y-4">
+        {items.map((k) => {
+          const a = q.data[k];
+          const unit = Number(cycle[k] === "monthly" ? a.monthly : a.annual);
+          return (
+            <div key={k} className="rounded-xl border border-border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-semibold">{names[k]}</p>
+                <span className={a.active ? "text-sm text-primary" : "text-sm text-muted-foreground"}>{a.active ? `Ativo até ${dateBR(a.expiresAt!)}` : "Inativo"}</span>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                {(["monthly", "annual"] as const).map((c) => (
+                  <label key={c} className="flex items-center gap-1"><input type="radio" name={`cycle-${k}`} checked={cycle[k] === c} disabled={Number(c === "monthly" ? a.monthly : a.annual) <= 0} onChange={() => setCycle((s) => ({ ...s, [k]: c }))} /> {c === "monthly" ? `Mensal (${brl(a.monthly)})` : `Anual (${brl(a.annual)})`}</label>
+                ))}
+              </div>
+              <p className="mt-2 text-sm">{a.quantity} plaquinha(s) × {brl(unit)} = <strong>{brl(unit * a.quantity)}</strong></p>
+              <Button className="mt-3" size="sm" disabled={m.isPending || a.pending || unit <= 0} onClick={() => m.mutate(k)}>{a.pending ? "Aguardando pagamento" : a.active ? "Renovar" : "Contratar"}</Button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -341,6 +384,7 @@ function CompanyPanelInner({ data, onChange }: { data: any; onChange: () => void
         </div>
       </div>
 
+      <AddonBilling companyId={data.company.id} />
       {data.page ? <MenuEditor data={data} active={active} onChange={onChange} /> : null}
 
       <div className="surface-card p-6">

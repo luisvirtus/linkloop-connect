@@ -60,6 +60,8 @@ export const getPublicPage = createServerFn({ method: "GET" })
     });
 
     const expired = subscriptionActive !== true;
+    const { data: addonState } = await supabase.rpc("company_addons", { _company_id: plate.company_id });
+    const addons = (addonState ?? {}) as { waiter?: { active: boolean }; menu?: { active: boolean } };
 
     let links: PublicLink[] = [];
     if (page) {
@@ -71,6 +73,7 @@ export const getPublicPage = createServerFn({ method: "GET" })
         .order("position", { ascending: true });
       const label = plate.label?.trim();
       links = (rows ?? []).flatMap((link) => {
+        if (link.kind === "waiter" && !addons.waiter?.active) return [];
         try {
           let url = normalizeLinkValue(link.kind, link.url);
           if (link.kind === "waiter") url += `?text=${encodeURIComponent(`Olá! ${label || "Um cliente"} está solicitando atendimento.`)}`;
@@ -91,7 +94,7 @@ export const getPublicPage = createServerFn({ method: "GET" })
       googleReviewUrl: normalizeOptionalWebUrl(page?.google_review_url),
       links,
       plateLabel: plate.label ?? null,
-      menu: page?.menu_enabled && Array.isArray(page.menu) && page.menu.length ? (page.menu as NonNullable<PublicPage["menu"]>) : null,
+      menu: addons.menu?.active && page?.menu_enabled && Array.isArray(page.menu) && page.menu.length ? (page.menu as NonNullable<PublicPage["menu"]>) : null,
       orderPhone: (() => {
         const l = links.find((x) => x.kind === "waiter") ?? links.find((x) => x.kind === "whatsapp");
         return l?.url.match(/wa\.me\/(\d+)/)?.[1] ?? null;

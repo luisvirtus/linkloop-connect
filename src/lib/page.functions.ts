@@ -292,3 +292,21 @@ export const saveMenu = createServerFn({ method: "POST" })
     if (error) throw new Error("Não foi possível salvar o cardápio.");
     return { ok: true };
   });
+
+export const getAddons = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { companyId: string }) => data)
+  .handler(async ({ data, context }) => {
+    const { data: res, error } = await context.supabase.rpc("company_addons", { _company_id: data.companyId });
+    if (error) throw new Error("Não foi possível carregar os recursos adicionais.");
+    return res as Record<"waiter" | "menu", { active: boolean; free: boolean; expiresAt: string | null; cycle: string | null; quantity: number; pending: boolean; monthly: number; annual: number }>;
+  });
+
+export const requestAddon = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { companyId: string; addon: "waiter" | "menu"; cycle: "monthly" | "annual" }) => data)
+  .handler(async ({ data, context }) => {
+    const { data: res, error } = await context.supabase.rpc("request_addon", { _company_id: data.companyId, _addon: data.addon, _cycle: data.cycle });
+    if (error) throw new Error(error.message);
+    return res as { ok: boolean; alreadyPending: boolean };
+  });

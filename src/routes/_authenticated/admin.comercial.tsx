@@ -23,7 +23,7 @@ export const Route = createFileRoute("/_authenticated/admin/comercial")({
 });
 
 const PAYMENT_LABELS: Record<string, string> = { pending: "Pendente", paid: "Pago", failed: "Falhou", refunded: "Reembolsado" };
-const KIND_LABELS: Record<string, string> = { plate: "Plaquinha", subscription: "Assinatura", renewal: "Renovação", sale: "Venda" };
+const KIND_LABELS: Record<string, string> = { plate: "Plaquinha", subscription: "Assinatura", renewal: "Renovação", sale: "Venda", addon: "Recurso adicional" };
 type CommercialEntity = "sales" | "subscriptions" | "payments" | "commissions";
 
 function Commercial() {

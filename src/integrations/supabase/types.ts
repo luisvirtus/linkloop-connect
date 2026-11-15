@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      addon_subscriptions: {
+        Row: {
+          addon: string
+          company_id: string
+          created_at: string
+          cycle: string
+          expires_at: string | null
+          id: string
+          quantity: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          addon: string
+          company_id: string
+          created_at?: string
+          cycle?: string
+          expires_at?: string | null
+          id?: string
+          quantity?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          addon?: string
+          company_id?: string
+          created_at?: string
+          cycle?: string
+          expires_at?: string | null
+          id?: string
+          quantity?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "addon_subscriptions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -290,6 +334,9 @@ export type Database = {
       }
       payments: {
         Row: {
+          addon_cycle: string | null
+          addon_id: string | null
+          addon_quantity: number | null
           amount: number
           company_id: string | null
           created_at: string
@@ -302,6 +349,9 @@ export type Database = {
           subscription_id: string | null
         }
         Insert: {
+          addon_cycle?: string | null
+          addon_id?: string | null
+          addon_quantity?: number | null
           amount?: number
           company_id?: string | null
           created_at?: string
@@ -314,6 +364,9 @@ export type Database = {
           subscription_id?: string | null
         }
         Update: {
+          addon_cycle?: string | null
+          addon_id?: string | null
+          addon_quantity?: number | null
           amount?: number
           company_id?: string | null
           created_at?: string
@@ -326,6 +379,13 @@ export type Database = {
           subscription_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payments_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "addon_subscriptions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payments_company_id_fkey"
             columns: ["company_id"]
@@ -572,28 +632,40 @@ export type Database = {
           commission_renewal_percent: number
           commission_sale_percent: number
           id: boolean
+          menu_annual_price: number
+          menu_monthly_price: number
           plate_cost: number
           plate_price: number
           subscription_price: number
           updated_at: string
+          waiter_annual_price: number
+          waiter_monthly_price: number
         }
         Insert: {
           commission_renewal_percent?: number
           commission_sale_percent?: number
           id?: boolean
+          menu_annual_price?: number
+          menu_monthly_price?: number
           plate_cost?: number
           plate_price?: number
           subscription_price?: number
           updated_at?: string
+          waiter_annual_price?: number
+          waiter_monthly_price?: number
         }
         Update: {
           commission_renewal_percent?: number
           commission_sale_percent?: number
           id?: boolean
+          menu_annual_price?: number
+          menu_monthly_price?: number
           plate_cost?: number
           plate_price?: number
           subscription_price?: number
           updated_at?: string
+          waiter_annual_price?: number
+          waiter_monthly_price?: number
         }
         Relationships: []
       }
@@ -702,6 +774,7 @@ export type Database = {
         }
         Returns: Json
       }
+      company_addons: { Args: { _company_id: string }; Returns: Json }
       confirm_admin_payment: {
         Args: { _payment_id: string; _user_id: string }
         Returns: Json
@@ -733,6 +806,10 @@ export type Database = {
         }[]
       }
       public_plate_state: { Args: { _code: string }; Returns: Json }
+      request_addon: {
+        Args: { _addon: string; _company_id: string; _cycle: string }
+        Returns: Json
+      }
       seller_company_names: {
         Args: never
         Returns: {
@@ -745,7 +822,7 @@ export type Database = {
       app_role: "admin" | "seller" | "client"
       commission_kind: "sale" | "renewal"
       commission_status: "pending" | "paid" | "cancelled"
-      payment_kind: "plate" | "subscription" | "renewal"
+      payment_kind: "plate" | "subscription" | "renewal" | "addon"
       payment_status: "pending" | "paid" | "failed" | "refunded"
       plate_size: "small" | "medium" | "large"
       plate_status:
@@ -888,7 +965,7 @@ export const Constants = {
       app_role: ["admin", "seller", "client"],
       commission_kind: ["sale", "renewal"],
       commission_status: ["pending", "paid", "cancelled"],
-      payment_kind: ["plate", "subscription", "renewal"],
+      payment_kind: ["plate", "subscription", "renewal", "addon"],
       payment_status: ["pending", "paid", "failed", "refunded"],
       plate_size: ["small", "medium", "large"],
       plate_status: [

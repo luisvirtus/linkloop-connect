@@ -78,6 +78,13 @@
       "when": 1794714100939,
       "tag": "0010_plate_labels_menu",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794781922502,
+      "tag": "0011_addon_modules_billing",
+      "breakpoints": true
     }
   ]
 }

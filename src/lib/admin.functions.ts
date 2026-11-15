@@ -571,10 +571,11 @@ export const saveSettings = createServerFn({ method: "POST" })
     subscription_price: number;
     commission_sale_percent: number;
     commission_renewal_percent: number;
+    waiter_monthly_price: number; waiter_annual_price: number; menu_monthly_price: number; menu_annual_price: number;
   }) => data)
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
-    const payload = { plate_price: data.plate_price, subscription_price: data.subscription_price, commission_sale_percent: data.commission_sale_percent, commission_renewal_percent: data.commission_renewal_percent };
+    const payload = { plate_price: data.plate_price, subscription_price: data.subscription_price, commission_sale_percent: data.commission_sale_percent, commission_renewal_percent: data.commission_renewal_percent, waiter_monthly_price: data.waiter_monthly_price, waiter_annual_price: data.waiter_annual_price, menu_monthly_price: data.menu_monthly_price, menu_annual_price: data.menu_annual_price };
     if (Object.values(payload).some(v => !Number.isFinite(v) || v < 0) || data.commission_sale_percent > 100 || data.commission_renewal_percent > 100) throw new Error("Confira os valores e percentuais.");
     const { error } = await db.from("settings").update(payload).eq("id", true);
     if (error) throw new Error(error.message);
@@ -586,7 +587,7 @@ export const resetSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const db = await requireAdmin(context);
-    const defaults = { id: true, plate_price: 80, subscription_price: 99, commission_sale_percent: 10, commission_renewal_percent: 5 };
+    const defaults = { id: true, plate_price: 80, subscription_price: 99, commission_sale_percent: 10, commission_renewal_percent: 5, waiter_monthly_price: 0, waiter_annual_price: 0, menu_monthly_price: 0, menu_annual_price: 0 };
     const { error } = await db.from("settings").upsert(defaults, { onConflict: "id" });
     if (error) throw new Error(error.message);
     await audit(db, context.userId, "settings.reset", "settings", null, defaults);
