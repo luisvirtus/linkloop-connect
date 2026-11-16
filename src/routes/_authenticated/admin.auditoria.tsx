@@ -6,7 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { deleteAdminRecord, listAudit, saveAuditNote } from "@/lib/admin.functions";
 import { dateTimeBR } from "@/lib/format";
 import { useMemo, useState } from "react";
-import { Pencil, Plus, Search, ScrollText, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Search, ScrollText, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -95,7 +95,7 @@ function Audit() {
                 <td className="pr-5 text-xs">
                   {l.details ? <details><summary className="cursor-pointer font-semibold text-primary">Visualizar</summary><pre className="mt-2 max-w-xs whitespace-pre-wrap rounded-md bg-muted p-3 text-xs">{JSON.stringify(l.details, null, 2)}</pre></details> : "—"}
                 </td>
-                <td className="pr-5"><div className="flex gap-1">{l.action === "admin.note" ? <Button variant="ghost" size="icon" title="Alterar observação" aria-label="Alterar observação" onClick={() => { setNote({ id: l.id, text: String(l.details?.note ?? "") }); setShowNote(true); }}><Pencil /></Button> : null}<Button variant="ghost" size="icon" title="Excluir registro" aria-label="Excluir registro" disabled={deleteMutation.isPending} onClick={() => { if (window.confirm("Excluir este registro definitivamente? Esta ação não poderá ser desfeita.")) deleteMutation.mutate(l.id); }}><Trash2 className="text-destructive" /></Button></div></td>
+                <td className="pr-5"><div className="flex gap-1">{l.action === "admin.note" ? <Button variant="ghost" size="icon" title="Alterar observação" aria-label="Alterar observação" onClick={() => { setNote({ id: l.id, text: String(l.details?.note ?? "") }); setShowNote(true); }}><Pencil /></Button> : null}</div></td>
               </tr>
             ))}
           </tbody>
