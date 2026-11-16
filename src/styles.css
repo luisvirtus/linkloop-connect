@@ -361,3 +361,6 @@
   .print-page .plate-print-medium { width: 150mm; height: 150mm; }
   .print-page .plate-print-large { width: 200mm; height: 200mm; }
 }
+
+/* Official WhatsApp brand colors for the support button. */
+.whatsapp-float { background-color: #25d366; color: #ffffff; }
