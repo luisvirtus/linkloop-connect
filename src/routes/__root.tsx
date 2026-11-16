@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { WhatsAppFloat } from "@/components/whatsapp-float";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
+import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
@@ -141,6 +142,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <WhatsAppFloat />
+      <Toaster closeButton />
     </QueryClientProvider>
   );
 }

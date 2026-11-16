@@ -3,11 +3,12 @@ import { SystemEditor, SystemPageHeading } from "@/components/system-page";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { deleteAdminRecord, listSellers, saveSeller } from "@/lib/admin.functions";
 import { ContactFields } from "@/components/contact-fields";
 import { emptyContact } from "@/lib/registration";
+import { sellerFormSchema, sellerFieldErrors } from "@/lib/seller-validation";
 import { brl } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
@@ -31,6 +32,8 @@ function Sellers() {
   const remove = useServerFn(deleteAdminRecord);
   const [form, setForm] = useState({ id: "", name: "", email: "", phone: "", contact: emptyContact, active: true });
   const [showForm, setShowForm] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saveError, setSaveError] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin", "sellers"],
@@ -43,34 +46,52 @@ function Sellers() {
       toast.success(res.linkedUser ? "Vendedor salvo e vinculado ao acesso." : "Vendedor salvo. Ele aparece no painel quando entrar com esse e-mail.");
       setForm({ id: "", name: "", email: "", phone: "", contact: emptyContact, active: true });
       setShowForm(false);
+      setErrors({});
+      setSaveError("");
       qc.invalidateQueries({ queryKey: ["admin", "sellers"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => { setSaveError(e.message); toast.error(e.message); },
   });
   const deleteMutation = useMutation({
     mutationFn: (id: string) => remove({ data: { entity: "sellers", id } }),
     onSuccess: (res) => { toast.success(res.deactivated ? "Vendedor desativado; histórico preservado." : "Vendedor excluído."); qc.invalidateQueries({ queryKey: ["admin"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
-  const edit = (s: any) => { setForm({ id: s.id, name: s.name, email: s.email ?? "", phone: s.phone ?? "", contact: { ...emptyContact, ...s.contact }, active: s.active }); setShowForm(true); };
+  const edit = (s: any) => { setErrors({}); setSaveError(""); setForm({ id: s.id, name: s.name, email: s.email ?? "", phone: s.phone ?? "", contact: { ...emptyContact, ...s.contact }, active: s.active }); setShowForm(true); };
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSaveError("");
+    const result = sellerFormSchema.safeParse(form);
+    if (!result.success) {
+      const nextErrors = sellerFieldErrors(result.error);
+      setErrors(nextErrors);
+      toast.error("Confira os campos obrigatórios destacados.");
+      const firstField = Object.keys(nextErrors)[0];
+      const field = firstField ? event.currentTarget.elements.namedItem(firstField) : null;
+      if (field instanceof HTMLElement) field.focus();
+      return;
+    }
+    setErrors({});
+    saveMutation.mutate({ ...form, ...result.data, phone: result.data.contact.whatsapp });
+  };
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3"><SystemPageHeading title="Vendedores" count={data?.length ?? 0} /><Button onClick={() => { setForm({ id: "", name: "", email: "", phone: "", contact: emptyContact, active: true }); setShowForm(true); }}><Plus /> Incluir vendedor</Button></div>
-      <SystemEditor open={showForm} title={form.id ? "Alterar vendedor" : "Novo vendedor"} onClose={() => setShowForm(false)}><div className="surface-card p-6">
-        <div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{form.id ? "Alterar vendedor" : "Novo vendedor"}</h2><Button variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowForm(false)}><X /></Button></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><SystemPageHeading title="Vendedores" count={data?.length ?? 0} /><Button onClick={() => { setErrors({}); setSaveError(""); setForm({ id: "", name: "", email: "", phone: "", contact: emptyContact, active: true }); setShowForm(true); }}><Plus /> Incluir vendedor</Button></div>
+      <SystemEditor open={showForm} title={form.id ? "Alterar vendedor" : "Novo vendedor"} onClose={() => setShowForm(false)}><form noValidate onSubmit={submit} className="surface-card p-6">
+        <div className="flex items-center justify-between"><h2 className="font-display text-lg font-bold">{form.id ? "Alterar vendedor" : "Novo vendedor"}</h2><Button type="button" variant="ghost" size="icon" aria-label="Fechar" onClick={() => setShowForm(false)}><X /></Button></div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <label className="grid gap-1 text-sm font-semibold">Nome<input className="input" maxLength={120} placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></label>
-          <label className="grid gap-1 text-sm font-semibold">E-mail de acesso<input className="input" type="email" maxLength={255} placeholder="E-mail de acesso" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></label>
+          <label className="grid gap-1 text-sm font-semibold"><span>Nome <span className="text-destructive">*</span></span><input name="name" required aria-invalid={!!errors.name} aria-describedby={errors.name ? "seller-name-error" : undefined} className={`input ${errors.name ? "border-destructive ring-1 ring-destructive" : ""}`} maxLength={120} placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />{errors.name ? <span id="seller-name-error" className="text-xs font-normal text-destructive">{errors.name}</span> : null}</label>
+          <label className="grid gap-1 text-sm font-semibold"><span>E-mail de acesso <span className="text-destructive">*</span></span><input name="email" required aria-invalid={!!errors.email} aria-describedby={errors.email ? "seller-email-error" : undefined} className={`input ${errors.email ? "border-destructive ring-1 ring-destructive" : ""}`} type="email" maxLength={255} placeholder="E-mail de acesso" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />{errors.email ? <span id="seller-email-error" className="text-xs font-normal text-destructive">{errors.email}</span> : null}</label>
         </div>
-        <div className="mt-4"><ContactFields value={form.contact} onChange={contact => setForm({ ...form, contact })} /></div>
-        <Button className="mt-4"
-          disabled={!form.name || saveMutation.isPending}
-          onClick={() => saveMutation.mutate({ ...form, phone: form.contact.whatsapp })}
+        <div className="mt-4"><ContactFields showRequired errors={errors} value={form.contact} onChange={contact => setForm({ ...form, contact })} /></div>
+        {saveError ? <p role="alert" className="mt-4 text-sm text-destructive">{saveError}</p> : null}
+        <Button className="mt-4" type="submit"
+          disabled={saveMutation.isPending}
         >
-          {form.id ? "Salvar alterações" : "Incluir vendedor"}
+          {saveMutation.isPending ? "Salvando..." : form.id ? "Salvar alterações" : "Incluir vendedor"}
         </Button>
-      </div></SystemEditor>
+      </form></SystemEditor>
 
       <div className="surface-card p-6">
         <h2 className="font-display text-lg font-bold">Vendedores</h2>

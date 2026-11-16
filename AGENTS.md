@@ -25,3 +25,4 @@
 - Print artwork uses explicit physical dimensions on a single A4 page context; avoid named child page contexts that generate empty pages around ancestor layouts.
 - Client administration uses local table controls and the shared Sheet for details and editing; existing authenticated operations remain unchanged to separate presentation from business rules.
 - Other management lists share RecordsTable presentation controls and SystemEditor sheets; scope management styling to system-ui so public QR pages and physical artwork stay unchanged.
+- Share seller schema validation between the form and server, and mount one root Sonner toaster so invalid input and failed saves remain visible.

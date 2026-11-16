@@ -1,5 +1,8 @@
 # Roadmap — Plaquinhas QR
 
+- [ ] Exibir erros de cadastro de vendedores e validar campos obrigatórios antes do envio
+- [ ] Conferir inclusão real e validação no navegador
+
 - [x] Aplicar padrão CRUD às demais telas internas, preservando página pública e arte impressa
 - [x] Conferir tabelas, gavetas de edição e navegação nas telas atualizadas em computador e celular
 

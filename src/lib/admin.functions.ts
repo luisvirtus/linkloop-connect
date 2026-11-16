@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { parseContact, type Contact } from "@/lib/registration";
+import { sellerSaveSchema } from "@/lib/seller-validation";
 import { financialTotals } from "@/lib/commercial-rules";
 import { removeCompany } from "@/lib/company-removal";
 import { isPrintablePlate, requireActiveCompany } from "@/lib/company-state";
@@ -352,7 +353,11 @@ export const listSellers = createServerFn({ method: "POST" })
 
 export const saveSeller = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: { id?: string | null; name: string; email?: string | null; phone?: string | null; contact?: Contact; active?: boolean }) => data)
+  .inputValidator((data: { id?: string | null; name: string; email?: string | null; phone?: string | null; contact?: Contact; active?: boolean }) => {
+    const result = sellerSaveSchema.safeParse(data);
+    if (!result.success) throw new Error(result.error.issues[0]?.message ?? "Confira o cadastro do vendedor.");
+    return result.data;
+  })
   .handler(async ({ data, context }) => {
     const db = await requireAdmin(context);
     const email = data.email?.trim().toLowerCase() || null;
@@ -368,10 +373,10 @@ export const saveSeller = createServerFn({ method: "POST" })
     let id = data.id ?? null;
     if (id) {
       const { error } = await db.from("sellers").update(payload).eq("id", id);
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(error.code === "23505" ? "Este e-mail ou acesso já está vinculado a outro vendedor." : "Não foi possível salvar o vendedor. Tente novamente.");
     } else {
       const { data: row, error } = await db.from("sellers").insert(payload).select("id").single();
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(error.code === "23505" ? "Este e-mail ou acesso já está vinculado a outro vendedor." : "Não foi possível salvar o vendedor. Tente novamente.");
       id = row.id;
     }
     if (userId) {
