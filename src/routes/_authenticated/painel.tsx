@@ -107,8 +107,9 @@ function Shell({
 }
 
 function LinkPlateCard({ initialCode, onDone }: { initialCode: string; onDone: () => void }) {
-  const [code, setCode] = useState(initialCode.toUpperCase());
-  return <><Field label="Código da plaquinha"><input className="input" maxLength={6} value={code} onChange={e => setCode(e.target.value.toUpperCase())} /></Field>{code.length === 6 ? <PlateActivation key={code} code={code} onDone={onDone} /> : null}</>;
+  const code = initialCode.toUpperCase();
+  if (/^[A-Z0-9]{6}$/.test(code)) return <PlateActivation key={code} code={code} onDone={onDone} />;
+  return <div className="management-section"><h2 className="font-display text-lg font-bold">Nenhuma plaquinha vinculada</h2><p className="mt-2 text-sm text-muted-foreground">Para vincular, aponte a câmera do celular para o QR Code da plaquinha física. Assim evitamos erros de digitação.</p></div>;
 }
 
 function CompanyPanel({ data, onChange }: { data: any; onChange: () => void }) {
@@ -390,6 +391,7 @@ function CompanyPanelInner({ data, onChange }: { data: any; onChange: () => void
 
       <div className="management-section">
         <h2 className="font-display text-lg font-bold">Plaquinhas</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Para adicionar outra, escaneie o QR Code da nova plaquinha com o celular conectado a esta conta.</p>
         <div className="mt-4 space-y-3">
           {data.plates.map((p: any) => (
             <div key={p.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border p-4">

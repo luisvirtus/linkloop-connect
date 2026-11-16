@@ -177,10 +177,13 @@ export const linkPlate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { code: string; companyName: string; googleReviewUrl?: string; contact: Contact; accepted: boolean; annualPrice: number }) => data)
   .handler(async ({ data, context }) => {
-    const contact = parseContact(data.contact);
+    let companyName = data.companyName; let rawContact: Contact = data.contact;
+    const { data: existing } = await context.supabase.from("companies").select("name, contact").eq("owner_id", context.userId).is("deleted_at", null).order("created_at").limit(1).maybeSingle();
+    if (existing) { companyName = existing.name; rawContact = existing.contact as Contact; }
+    const contact = parseContact(rawContact);
     if (!data.accepted) throw new Error("Confirme o aceite da anuidade.");
     const { data: result, error } = await context.supabase.rpc("activate_registered_plate", {
-      _code: data.code.trim().toUpperCase(), _company_name: data.companyName.trim(),
+      _code: data.code.trim().toUpperCase(), _company_name: companyName.trim(),
       _review_url: data.googleReviewUrl?.trim() || "", _contact: contact,
       _accepted: data.accepted, _annual_price: data.annualPrice,
     });
@@ -206,4 +209,13 @@ export const getQrOwner = createServerFn({ method: "POST" })
     if (!plate?.company_id) return { owner: false };
     const { data: company } = await context.supabase.from("companies").select("id").eq("id", plate.company_id).eq("owner_id", context.userId).is("deleted_at", null).maybeSingle();
     return { owner: !!company };
+  });
+
+export const getMyCompany = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase.from("companies").select("name, contact").eq("owner_id", context.userId).is("deleted_at", null).order("created_at").limit(1).maybeSingle();
+    if (!data) return { company: null };
+    let complete = true; try { parseContact(data.contact as Contact); } catch { complete = false; }
+    return { company: { name: data.name as string, complete } };
   });
