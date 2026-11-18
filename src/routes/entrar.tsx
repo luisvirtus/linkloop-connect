@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router"
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { LegalLinks } from "@/components/legal-page";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -85,6 +86,8 @@ function SignIn() {
         >
           {loading ? "Abrindo..." : "Continuar com o Google"}
         </Button>
+        <p className="mt-6 text-xs text-muted-foreground">Ao continuar, você concorda com os termos e a política abaixo.</p>
+        <LegalLinks />
       </div>
     </main>
   );

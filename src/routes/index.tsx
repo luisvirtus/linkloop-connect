@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { QrCode, Star, Smartphone, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { LegalLinks } from "@/components/legal-page";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -96,6 +97,7 @@ function Home() {
 
       <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
         © {new Date().getFullYear()} Plaquinhas QR
+        <LegalLinks />
       </footer>
     </main>
   );
