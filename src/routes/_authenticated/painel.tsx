@@ -387,7 +387,7 @@ function CompanyPanelInner({ data, onChange }: { data: any; onChange: () => void
       </div>
 
       <AddonBilling companyId={data.company.id} />
-      <TelegramSettings companyId={data.company.id} admin={!!data.isAdmin} />
+      <TelegramSettings companyId={data.company.id} admin={false} />
       {data.page ? <MenuEditor data={data} active={active} onChange={onChange} /> : null}
 
       <div className="management-section">

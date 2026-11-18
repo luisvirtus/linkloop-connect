@@ -109,9 +109,9 @@ function Commercial() {
           </tbody></table></RecordsTable>
         </DataPanel></TabsContent>
 
-        <TabsContent value="assinaturas"><DataPanel title="Assinaturas anuais" action={<Button size="sm" onClick={() => openNew("subscriptions")}><Plus /> Incluir assinatura</Button>} loading={subs.isLoading} error={subs.error} empty={(subs.data ?? []).length === 0}>
-          <RecordsTable labels={["Empresa", "Vendedor da renovação", "Vencimento", "Situação", "Valor", "Ações"]}><table className="w-full min-w-[820px] text-left text-sm"><TableHead labels={["Empresa", "Vendedor da renovação", "Vencimento", "Situação", "Valor", "Ações"]} /><tbody>
-            {(subs.data ?? []).map((item: any) => <tr key={item.id} className="border-t border-border"><Cell strong>{item.company_name}</Cell><Cell>{item.seller_name}</Cell><Cell>{dateBR(item.expires_at)}</Cell><Cell><Status value={item.active ? "active" : "expired"} /></Cell><Cell>{brl(item.amount)}</Cell><ActionCell onEdit={() => openEdit("subscriptions", item)} onDelete={() => exclude("subscriptions", item.id)} /></tr>)}
+        <TabsContent value="assinaturas"><DataPanel title="Assinaturas (base e recursos adicionais)" action={<Button size="sm" onClick={() => openNew("subscriptions")}><Plus /> Incluir assinatura</Button>} loading={subs.isLoading} error={subs.error} empty={(subs.data ?? []).length === 0}>
+          <RecordsTable labels={["Empresa", "Tipo", "Ciclo", "Vendedor da renovação", "Vencimento", "Situação", "Valor", "Ações"]}><table className="w-full min-w-[1040px] text-left text-sm"><TableHead labels={["Empresa", "Tipo", "Ciclo", "Vendedor da renovação", "Vencimento", "Situação", "Valor", "Ações"]} /><tbody>
+            {(subs.data ?? []).map((item: any) => <tr key={item.id} className="border-t border-border"><Cell strong>{item.company_name}</Cell><Cell>{item.kind_label}</Cell><Cell>{item.cycle_label}</Cell><Cell>{item.seller_name}</Cell><Cell>{item.expires_at ? dateBR(item.expires_at) : "Aguardando pagamento"}</Cell><Cell><Status value={item.active ? "active" : "expired"} /></Cell><Cell>{brl(item.amount)}</Cell>{item.editable ? <ActionCell onEdit={() => openEdit("subscriptions", item)} onDelete={() => exclude("subscriptions", item.id)} /> : <Cell>Pelo pagamento</Cell>}</tr>)}
           </tbody></table></RecordsTable>
         </DataPanel></TabsContent>
 

@@ -488,12 +488,29 @@ export const listSubscriptions = createServerFn({ method: "POST" })
     ]);
     const cm = Object.fromEntries((companies ?? []).map((c: any) => [c.id, c.name]));
     const sm = Object.fromEntries((sellers ?? []).map((s: any) => [s.id, s.name]));
-    return (subs ?? []).map((s: any) => ({
+    const { data: addons } = await db.from("addon_subscriptions").select("*").limit(300);
+    const base = (subs ?? []).map((s: any) => ({
       ...s,
+      kind_label: "Plaquinha (base)",
+      cycle_label: "Anual",
+      editable: true,
       company_name: cm[s.company_id] ?? "—",
       seller_name: s.seller_id ? sm[s.seller_id] ?? "—" : "Sem vendedor vinculado",
       active: new Date(s.expires_at).getTime() > Date.now(),
     }));
+    const extra = (addons ?? []).map((a: any) => ({
+      id: a.id,
+      company_id: a.company_id,
+      expires_at: a.expires_at,
+      amount: Number(a.unit_price) * Number(a.quantity),
+      kind_label: `${a.addon === "waiter" ? "Chamar atendente" : "Cardápio"} · ${a.quantity} plaquinha(s)`,
+      cycle_label: a.cycle === "monthly" ? "Mensal" : "Anual",
+      editable: false,
+      company_name: cm[a.company_id] ?? "—",
+      seller_name: "Vendedor original",
+      active: !!a.expires_at && new Date(a.expires_at).getTime() > Date.now(),
+    }));
+    return [...base, ...extra];
   });
 
 export const listPayments = createServerFn({ method: "POST" })
@@ -511,13 +528,15 @@ export const listPayments = createServerFn({ method: "POST" })
     const subMap = Object.fromEntries((subscriptions ?? []).map((s: any) => [s.id, s]));
     const sellerMap = Object.fromEntries((sellers ?? []).map((s: any) => [s.id, s.name]));
     const saleMap = Object.fromEntries((sales ?? []).map((s: any) => [s.id, s]));
+    const { data: addonRows } = await db.from("addon_subscriptions").select("id, addon");
+    const addonMap: Record<string, any> = Object.fromEntries((addonRows ?? []).map((a: any) => [a.id, a]));
     return (payments ?? []).map((p: any) => {
       const subscription = p.subscription_id ? subMap[p.subscription_id] : null;
       return {
         ...p,
         company_name: p.company_id ? cm[p.company_id] ?? "—" : "—",
         seller_name: subscription?.seller_id ? sellerMap[subscription.seller_id] ?? "—" : null,
-        related_label: p.subscription_id ? `Assinatura até ${new Date(subscription.expires_at).toLocaleDateString("pt-BR")}` : p.sale_id ? `Venda da plaquinha ${saleMap[p.sale_id]?.plate_id ? "vinculada" : ""}`.trim() : "—",
+        related_label: p.kind === "addon" ? `${p.addon_id && addonMap[p.addon_id]?.addon === "waiter" ? "Chamar atendente" : "Cardápio"} · ${p.addon_cycle === "monthly" ? "Mensal" : "Anual"}${p.addon_quantity ? ` · ${p.addon_quantity} plaquinha(s)` : ""}` : p.subscription_id ? `Assinatura até ${new Date(subscription.expires_at).toLocaleDateString("pt-BR")}` : p.sale_id ? `Venda da plaquinha ${saleMap[p.sale_id]?.plate_id ? "vinculada" : ""}`.trim() : "—",
       };
     });
   });

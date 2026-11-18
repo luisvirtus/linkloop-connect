@@ -78,7 +78,6 @@ function Config() {
   return (
     <div className="max-w-4xl space-y-6">
       <SystemPageHeading title="Configurações" />
-      <section className="management-section"><h2 className="font-display text-lg font-bold">Telegram · VotonaAtende_bot</h2><Button className="mt-3" variant="outline" disabled={telegramMutation.isPending} onClick={() => telegramMutation.mutate()}>Conectar botões do Telegram após publicar</Button></section>
 
       <section className="management-section">
         <div className="flex items-center gap-2">
@@ -134,6 +133,7 @@ function Config() {
           <Save /> {saveMutation.isPending ? "Salvando..." : "Salvar configurações"}
         </Button>
       </div>
+      <section className="management-section" title="Uso técnico, normalmente uma única vez. Registra no Telegram o endereço www.votona.com.br/api/public/telegram/webhook para o bot responder /id e os botões Atender, Pronto e Liberar mesa funcionarem. Como foi feito: 1) no Telegram, conversa com @BotFather → /newbot → bot VotonaAtende_bot; 2) o token gerado foi salvo como segredo TELEGRAM_BOT_TOKEN no servidor (nunca colar em chat); 3) publicar o site; 4) clicar neste botão. Se trocar o token ou o domínio, repita os passos 2 a 4."><h2 className="font-display text-lg font-bold">Integração técnica · Telegram (@VotonaAtende_bot)</h2><p className="mt-1 text-sm text-muted-foreground">Passe o mouse para ver como foi configurado. Use só após publicar, se trocar o token ou o domínio.</p><Button className="mt-3" variant="outline" title="Uso técnico, normalmente uma única vez. Registra no Telegram o endereço www.votona.com.br/api/public/telegram/webhook para o bot responder /id e os botões Atender, Pronto e Liberar mesa funcionarem. Como foi feito: 1) no Telegram, conversa com @BotFather → /newbot → bot VotonaAtende_bot; 2) o token gerado foi salvo como segredo TELEGRAM_BOT_TOKEN no servidor (nunca colar em chat); 3) publicar o site; 4) clicar neste botão. Se trocar o token ou o domínio, repita os passos 2 a 4." disabled={telegramMutation.isPending} onClick={() => telegramMutation.mutate()}>Conectar botões do Telegram</Button></section>
     </div>
   );
 }
