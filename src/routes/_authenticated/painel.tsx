@@ -1,10 +1,11 @@
+import { BrandLogo } from "@/components/brand-logo";
 import { SystemPageHeading } from "@/components/system-page";
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Lock, LogOut, Printer, QrCode, Star, Trash2, Unlock } from "lucide-react";
+import { Lock, LogOut, Printer, Star, Trash2, Unlock } from "lucide-react";
 import { PlateActivation } from "@/components/plate-activation";
 import { ContactFields } from "@/components/contact-fields";
 import { emptyContact } from "@/lib/registration";
@@ -77,7 +78,7 @@ function Shell({
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div className="flex items-center gap-2 font-display font-bold">
-            <QrCode className="h-5 w-5 text-primary" /> Minha plaquinha
+            <BrandLogo className="h-6 w-6" /> Minha plaquinha
           </div>
           <div className="flex items-center gap-3 text-sm">
             {isSeller ? <Link to="/vendedor" className="font-semibold text-primary">Vendedor</Link> : null}

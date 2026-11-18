@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/brand-logo";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { QrCode, Star, Smartphone, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -31,7 +32,7 @@ function Home() {
     <main className="system-ui min-h-screen bg-background">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
         <div className="flex items-center gap-2 font-display text-lg font-bold">
-          <QrCode className="h-6 w-6 text-primary" />
+          <BrandLogo className="h-7 w-7" />
           Plaquinhas QR
         </div>
         <Button asChild><Link

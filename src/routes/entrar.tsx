@@ -1,6 +1,6 @@
+import { BrandLogo } from "@/components/brand-logo";
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable";
@@ -73,7 +73,7 @@ function SignIn() {
   return (
     <main className="system-ui flex min-h-screen items-center justify-center bg-background px-5">
       <div className="w-full max-w-sm py-12 text-center">
-        <QrCode className="mx-auto h-10 w-10 text-primary" />
+        <BrandLogo className="mx-auto h-12 w-12" />
         <h1 className="mt-4 font-display text-2xl font-bold">Entrar</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           Use sua conta Google. É rápido e não precisa criar senha.

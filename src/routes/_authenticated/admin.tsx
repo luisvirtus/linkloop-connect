@@ -1,5 +1,6 @@
+import { BrandLogo } from "@/components/brand-logo";
 import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
-import { ShieldCheck, LayoutDashboard, Package, Building2, Users, ReceiptText, Settings2, ScrollText, UserRound, QrCode } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, Package, Building2, Users, ReceiptText, Settings2, ScrollText, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,7 +49,7 @@ function AdminLayout() {
         <div className="px-5 py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 font-display font-bold">
-              <QrCode className="h-5 w-5 text-primary" /> Plaquinhas QR
+              <BrandLogo className="h-6 w-6" /> Plaquinhas QR
             </div>
             <ShieldCheck className="size-4 text-muted-foreground" />
           </div>
