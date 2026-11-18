@@ -99,6 +99,20 @@
       "when": 1794784814107,
       "tag": "0013_retired_company_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794961390992,
+      "tag": "0014_telegram_table_service",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1794961508439,
+      "tag": "0015_telegram_public_flags_pairing",
+      "breakpoints": true
     }
   ]
 }

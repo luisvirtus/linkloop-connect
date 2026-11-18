@@ -736,6 +736,176 @@ export type Database = {
           },
         ]
       }
+      table_requests: {
+        Row: {
+          actor: string | null
+          chat_id: string
+          created_at: string
+          id: string
+          items: Json
+          kind: string
+          message_id: number | null
+          session_id: string
+          status: string
+          subtotal: number
+        }
+        Insert: {
+          actor?: string | null
+          chat_id: string
+          created_at?: string
+          id: string
+          items?: Json
+          kind: string
+          message_id?: number | null
+          session_id: string
+          status?: string
+          subtotal?: number
+        }
+        Update: {
+          actor?: string | null
+          chat_id?: string
+          created_at?: string
+          id?: string
+          items?: Json
+          kind?: string
+          message_id?: number | null
+          session_id?: string
+          status?: string
+          subtotal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_requests_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "table_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      table_sessions: {
+        Row: {
+          closed_at: string | null
+          company_id: string
+          expires_at: string
+          id: string
+          plate_id: string
+          started_at: string
+        }
+        Insert: {
+          closed_at?: string | null
+          company_id: string
+          expires_at?: string
+          id?: string
+          plate_id: string
+          started_at?: string
+        }
+        Update: {
+          closed_at?: string | null
+          company_id?: string
+          expires_at?: string
+          id?: string
+          plate_id?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_sessions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "table_sessions_plate_id_fkey"
+            columns: ["plate_id"]
+            isOneToOne: false
+            referencedRelation: "plates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      table_visitors: {
+        Row: {
+          session_id: string
+          token: string
+        }
+        Insert: {
+          session_id: string
+          token?: string
+        }
+        Update: {
+          session_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_visitors_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "table_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_pairings: {
+        Row: {
+          chat_id: string
+          code_hash: string
+          company_id: string
+          expires_at: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          code_hash: string
+          company_id: string
+          expires_at: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          code_hash?: string
+          company_id?: string
+          expires_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_pairings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_service_settings: {
+        Row: {
+          chat_id: string
+          company_id: string
+          waiter_enabled: boolean
+        }
+        Insert: {
+          chat_id: string
+          company_id: string
+          waiter_enabled?: boolean
+        }
+        Update: {
+          chat_id?: string
+          company_id?: string
+          waiter_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_service_settings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -786,6 +956,16 @@ export type Database = {
         Args: { _id: string; _reference: string }
         Returns: Json
       }
+      create_table_request: {
+        Args: {
+          _code: string
+          _id: string
+          _items: Json
+          _kind: string
+          _token: string
+        }
+        Returns: Json
+      }
       current_seller_id: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -799,6 +979,10 @@ export type Database = {
         Args: { _company_id: string }
         Returns: boolean
       }
+      open_table_session: {
+        Args: { _code: string; _token?: string }
+        Returns: Json
+      }
       owns_company: { Args: { _company_id: string }; Returns: boolean }
       public_company_by_code: {
         Args: { _code: string }
@@ -809,6 +993,7 @@ export type Database = {
         }[]
       }
       public_plate_state: { Args: { _code: string }; Returns: Json }
+      public_service_flags: { Args: { _code: string }; Returns: Json }
       remove_company: { Args: { _company_id: string }; Returns: Json }
       request_addon: {
         Args: { _addon: string; _company_id: string; _cycle: string }
@@ -820,6 +1005,16 @@ export type Database = {
           id: string
           name: string
         }[]
+      }
+      telegram_table_action: {
+        Args: {
+          _action: string
+          _actor: string
+          _chat: string
+          _id: string
+          _message: number
+        }
+        Returns: Json
       }
     }
     Enums: {

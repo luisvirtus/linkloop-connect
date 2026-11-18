@@ -1,0 +1,5 @@
+CREATE OR REPLACE FUNCTION public.public_service_flags(_code text) RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT jsonb_build_object('waiterEnabled',coalesce((SELECT cfg.waiter_enabled FROM public.telegram_service_settings cfg JOIN public.plates p ON p.company_id=cfg.company_id JOIN public.companies c ON c.id=p.company_id WHERE p.qr_code=_code AND p.status='linked' AND NOT p.blocked_by_admin AND NOT p.blocked_by_client AND c.deleted_at IS NULL),false)) $$;
+REVOKE ALL ON FUNCTION public.public_service_flags(text) FROM PUBLIC; GRANT EXECUTE ON FUNCTION public.public_service_flags(text) TO anon,authenticated,service_role;
+CREATE TABLE public.telegram_pairings(company_id uuid PRIMARY KEY REFERENCES public.companies(id) ON DELETE CASCADE,user_id uuid NOT NULL,chat_id text NOT NULL,code_hash text NOT NULL,expires_at timestamptz NOT NULL);
+GRANT ALL ON public.telegram_pairings TO service_role;
+ALTER TABLE public.telegram_pairings ENABLE ROW LEVEL SECURITY;

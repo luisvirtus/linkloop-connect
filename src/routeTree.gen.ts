@@ -26,6 +26,7 @@ import { Route as AuthenticatedAdminImpressaoRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminVendedoresRouteImport } from './routes/_authenticated/admin.vendedores'
 import { Route as AuthenticatedImprimirPlateIdRouteImport } from './routes/_authenticated/imprimir.$plateId'
 import { Route as AuthenticatedAdminClienteCompanyIdRouteImport } from './routes/_authenticated/admin.cliente.$companyId'
+import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -120,6 +121,12 @@ const AuthenticatedAdminClienteCompanyIdRoute =
     path: '/cliente/$companyId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiPublicTelegramWebhookRoute =
+  ApiPublicTelegramWebhookRouteImport.update({
+    id: '/api/public/telegram/webhook',
+    path: '/api/public/telegram/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/imprimir/$plateId': typeof AuthenticatedImprimirPlateIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/cliente/$companyId': typeof AuthenticatedAdminClienteCompanyIdRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -155,6 +163,7 @@ export interface FileRoutesByTo {
   '/imprimir/$plateId': typeof AuthenticatedImprimirPlateIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/cliente/$companyId': typeof AuthenticatedAdminClienteCompanyIdRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -175,6 +184,7 @@ export interface FileRoutesById {
   '/_authenticated/imprimir/$plateId': typeof AuthenticatedImprimirPlateIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/cliente/$companyId': typeof AuthenticatedAdminClienteCompanyIdRoute
+  '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/imprimir/$plateId'
     | '/admin/'
     | '/admin/cliente/$companyId'
+    | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/imprimir/$plateId'
     | '/admin'
     | '/admin/cliente/$companyId'
+    | '/api/public/telegram/webhook'
   id:
     | '__root__'
     | '/'
@@ -231,6 +243,7 @@ export interface FileRouteTypes {
     | '/_authenticated/imprimir/$plateId'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/cliente/$companyId'
+    | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -238,6 +251,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   EntrarRoute: typeof EntrarRoute
   QCodeRoute: typeof QCodeRoute
+  ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -361,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminClienteCompanyIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/telegram/webhook': {
+      id: '/api/public/telegram/webhook'
+      path: '/api/public/telegram/webhook'
+      fullPath: '/api/public/telegram/webhook'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -414,6 +435,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   EntrarRoute: EntrarRoute,
   QCodeRoute: QCodeRoute,
+  ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

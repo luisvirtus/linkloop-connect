@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { publicChannelEnabled } from "@/lib/commercial-rules";
 import { getPublicPage } from "@/lib/public.functions";
 import { BellRing } from "lucide-react";
-import { MenuOrder } from "@/components/menu-order";
+import { TableAttendance } from "@/components/table-attendance";
 
 export const Route = createFileRoute("/q/$code")({
   loader: ({ params }) => getPublicPage({ data: { code: params.code } }),
@@ -142,6 +142,7 @@ function PublicPage() {
   const expired = page.state === "expired";
 
   const showWebsite = page.websiteUrl && !page.links.some((link) => link.kind === "website" && link.url === page.websiteUrl);
+  const contactLinks = page.links.filter((link) => link.kind !== "waiter");
 
   return (
     <main className="min-h-screen bg-card sm:flex sm:items-center sm:justify-center sm:bg-muted/55 sm:px-4 sm:py-10">
@@ -185,11 +186,11 @@ function PublicPage() {
             </section>
           ) : null}
 
-           {showWebsite || page.links.length > 0 ? (
+            {showWebsite || contactLinks.length > 0 ? (
             <section className="mt-8 border-t border-border pt-6" aria-labelledby="channels-title">
                <h2 id="channels-title" className="mb-3 text-left text-sm font-semibold text-card-foreground">Fale com {page.companyName ?? "a empresa"}</h2>
               <div className="space-y-3">
-                 {showWebsite && page.websiteUrl ? (
+                 {showWebsite && page.websiteUrl && expired ? <ChannelLink href="" label="Site oficial" kind="website" disabled /> : showWebsite && page.websiteUrl ? (
                   <a
                     href={page.websiteUrl}
                     target="_blank"
@@ -204,12 +205,12 @@ function PublicPage() {
                     <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-google-blue" aria-hidden="true" />
                   </a>
                 ) : null}
-                {page.links.map((link) => <ChannelLink key={link.id} href={link.url} label={link.label} kind={link.kind} disabled={!publicChannelEnabled(expired, link.kind)} />)}
+                {contactLinks.map((link) => <ChannelLink key={link.id} href={link.url} label={link.label} kind={link.kind} disabled={!publicChannelEnabled(expired, link.kind)} />)}
               </div>
             </section>
           ) : null}
 
-          {page.menu && !expired ? <MenuOrder items={page.menu} phone={page.orderPhone ?? null} plateLabel={page.plateLabel ?? null} /> : null}
+          {page.waiterEnabled || page.menu ? <TableAttendance code={code} waiter={!!page.waiterEnabled} menu={page.menu ?? null} waiterActive={!!page.waiterActive} menuActive={!!page.menuActive} label={page.plateLabel ?? null} /> : null}
 
            <p className="mt-7 text-center text-xs text-muted-foreground">Plaquinhas QR · <Link to="/entrar" search={{ next: `/q/${code}` }}>Área da empresa</Link></p>
         </div>

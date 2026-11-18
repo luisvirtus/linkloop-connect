@@ -26,3 +26,5 @@
 - Client administration uses local table controls and the shared Sheet for details and editing; existing authenticated operations remain unchanged to separate presentation from business rules.
 - Other management lists share RecordsTable presentation controls and SystemEditor sheets; scope management styling to system-ui so public QR pages and physical artwork stay unchanged.
 - Share seller schema validation between the form and server, and mount one root Sonner toaster so invalid input and failed saves remain visible.
+- Table service uses service-only atomic database functions, server-priced orders and opaque browser tokens; Telegram callbacks are verified against the configured group and message to prevent cross-company updates.
+- Keep the chosen plain Telegram credential server-only; webhook registration is an administrator action after the production endpoint is reachable.

@@ -16,6 +16,9 @@ export type PublicPage = {
   plateLabel?: string | null;
   menu?: { c: string; n: string; d?: string; p: number }[] | null;
   orderPhone?: string | null;
+  waiterEnabled?: boolean;
+  waiterActive?: boolean;
+  menuActive?: boolean;
 };
 
 export const getPublicPage = createServerFn({ method: "GET" })
@@ -73,16 +76,19 @@ export const getPublicPage = createServerFn({ method: "GET" })
         .order("position", { ascending: true });
       const label = plate.label?.trim();
       links = (rows ?? []).flatMap((link) => {
-        if (link.kind === "waiter" && !addons.waiter?.active) return [];
+        if (link.kind === "waiter") return [{ ...link, url: "" }];
         try {
           let url = normalizeLinkValue(link.kind, link.url);
-          if (link.kind === "waiter") url += `?text=${encodeURIComponent(`Olá! ${label || "Um cliente"} está solicitando atendimento.`)}`;
           return [{ ...link, url }];
         } catch {
           return [];
         }
       });
     }
+
+    // Only expose enabled flags, never the private Telegram group ID.
+    const { getServiceFlags } = await import("./table-service-public.server");
+    const flags = await getServiceFlags(data.code);
 
     return {
       state: expired ? "expired" : "ok",
@@ -93,8 +99,11 @@ export const getPublicPage = createServerFn({ method: "GET" })
       websiteUrl: normalizeOptionalWebUrl(company?.website_url),
       googleReviewUrl: normalizeOptionalWebUrl(page?.google_review_url),
       links,
+      waiterEnabled: flags.waiterEnabled || links.some((l) => l.kind === "waiter"),
+      waiterActive: !expired && !!addons.waiter?.active,
+      menuActive: !expired && !!addons.menu?.active,
       plateLabel: plate.label ?? null,
-      menu: addons.menu?.active && page?.menu_enabled && Array.isArray(page.menu) && page.menu.length ? (page.menu as NonNullable<PublicPage["menu"]>) : null,
+      menu: page?.menu_enabled && Array.isArray(page.menu) && page.menu.length ? (page.menu as NonNullable<PublicPage["menu"]>) : null,
       orderPhone: (() => {
         const l = links.find((x) => x.kind === "waiter") ?? links.find((x) => x.kind === "whatsapp");
         return l?.url.match(/wa\.me\/(\d+)/)?.[1] ?? null;

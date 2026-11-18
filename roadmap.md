@@ -1,5 +1,10 @@
 # Roadmap — Plaquinhas QR
 
+- [x] Implementar Telegram: configuração por empresa, chamados/pedidos e ações da equipe
+- [x] Sessões de 90 minutos, encerramento da mesa e total acumulado com validação no servidor
+- [x] Testar painel autenticado, cardápio no celular, recusa sem grupo e regras automatizadas
+- [ ] Registrar webhook e testar entrega/ações reais — depende de publicação e grupo Telegram confirmado pelo usuário
+
 - [x] Exibir erros de cadastro de vendedores e validar campos obrigatórios antes do envio
 - [x] Conferir inclusão real e validação no navegador
 - [x] Verificar com conta temporária autorizada em substituição à conta do Marcello Queiroz

@@ -14,6 +14,7 @@ import { brl, dateBR, PLATE_SIZE_LABEL, PLATE_STATUS_LABEL } from "@/lib/format"
 import { supabase } from "@/integrations/supabase/client";
 import { channelFor, editableLinkValue, LINK_CHANNELS, normalizeLinkValue } from "@/lib/link-channels";
 import { Button } from "@/components/ui/button";
+import { TelegramSettings } from "@/components/telegram-settings";
 
 type Search = { code?: string | undefined; companyId?: string | undefined };
 
@@ -183,10 +184,9 @@ function MenuEditor({ data, active, onChange }: { data: any; active: boolean; on
   return (
     <div className="management-section">
       <h2 className="font-display text-lg font-bold">Cardápio (opcional)</h2>
-      <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={enabled} disabled={!active} onChange={(e) => setEnabled(e.target.checked)} /> Mostrar cardápio na página e receber pedidos pelo WhatsApp</label>
+      <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={enabled} disabled={!active} onChange={(e) => setEnabled(e.target.checked)} /> Mostrar cardápio na página e receber pedidos pelo Telegram</label>
       {enabled ? (
         <div className="mt-4 space-y-3">
-          <p className="text-xs text-muted-foreground">Os pedidos vão para o número do item "Chamar atendente" ou, se não houver, do WhatsApp.</p>
           {items.map((it, i) => (
             <div key={i} className="grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-[1fr_1.5fr_0.8fr_auto]">
               <input className="input" aria-label="Categoria" placeholder="Categoria" value={it.c ?? ""} disabled={!active} onChange={(e) => set(i, "c", e.target.value)} />
@@ -387,6 +387,7 @@ function CompanyPanelInner({ data, onChange }: { data: any; onChange: () => void
       </div>
 
       <AddonBilling companyId={data.company.id} />
+      <TelegramSettings companyId={data.company.id} admin={!!data.isAdmin} />
       {data.page ? <MenuEditor data={data} active={active} onChange={onChange} /> : null}
 
       <div className="management-section">

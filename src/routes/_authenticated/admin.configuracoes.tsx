@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { getSettings, resetSettings, saveSettings } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { BadgePercent, CircleDollarSign, RotateCcw, Save, Settings2 } from "lucide-react";
+import { registerTelegramWebhook } from "@/lib/table-service.functions";
 
 export const Route = createFileRoute("/_authenticated/admin/configuracoes")({
   head: () => ({ meta: [
@@ -25,6 +26,8 @@ function Config() {
   const fetchSettings = useServerFn(getSettings);
   const save = useServerFn(saveSettings);
   const reset = useServerFn(resetSettings);
+  const connectTelegram = useServerFn(registerTelegramWebhook);
+  const telegramMutation = useMutation({ mutationFn: () => connectTelegram(), onSuccess: () => toast.success("Botões do Telegram conectados."), onError: (e: Error) => toast.error(e.message) });
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin", "settings"],
@@ -75,6 +78,7 @@ function Config() {
   return (
     <div className="max-w-4xl space-y-6">
       <SystemPageHeading title="Configurações" />
+      <section className="management-section"><h2 className="font-display text-lg font-bold">Telegram · VotonaAtende_bot</h2><Button className="mt-3" variant="outline" disabled={telegramMutation.isPending} onClick={() => telegramMutation.mutate()}>Conectar botões do Telegram após publicar</Button></section>
 
       <section className="management-section">
         <div className="flex items-center gap-2">
